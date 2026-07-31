@@ -187,6 +187,19 @@ class SnorkelTaskValidator:
                            f"Missing metadata fields: {', '.join(missing_keys)}",
                            suggestion=f"Add missing fields to [metadata]: {missing_keys}")
 
+        # Check difficulty enum validity
+        difficulty_val = str(meta.get("difficulty", "")).strip().lower()
+        valid_difficulties = ["easy", "medium", "hard"]
+        if difficulty_val in valid_difficulties:
+            self.add_check("DIFFICULTY_ENUM_VALID", "Task Difficulty Value Compliance", "Metadata", "PASS", f"Difficulty is valid ('{difficulty_val}').")
+        else:
+            self.add_check(
+                "DIFFICULTY_ENUM_VALID", "Task Difficulty Value Compliance", "Metadata", "FAIL",
+                f"Invalid difficulty '{meta.get('difficulty')}'. Allowed schema v2.0 values are: {valid_difficulties}.",
+                details="Per Snorkel schema v2.0, difficulty must be exactly one of 'easy', 'medium', or 'hard'. Custom strings like 'excellent' break STB Harbor evaluation.",
+                suggestion="Change metadata difficulty in task.toml to 'easy', 'medium', or 'hard'."
+            )
+
         for sec in ["verifier", "agent", "environment"]:
             if sec in data:
                 self.add_check(f"SECTION_{sec.upper()}", f"[{sec}] Configuration Section", "Metadata", "PASS", f"[{sec}] section present.")
@@ -433,6 +446,28 @@ class SnorkelTaskValidator:
                 self.add_check("TEST_SH_CTRF", "Verifier CTRF Reporting & Reward Output", "Testing", "WARN",
                                "tests/test.sh should use `--ctrf /logs/verifier/ctrf.json` and write `1` or `0` to `/logs/verifier/reward.txt`.",
                                suggestion="Update test.sh to execute pytest with CTRF reporting and write reward score.")
+
+            # Check if set -e causes early exit before writing reward.txt on test failure
+            lines_test = [l.strip() for l in t_content.splitlines()]
+            has_set_e = any(l.startswith("set -e") or "set -euo pipefail" in l for l in lines_test)
+            has_set_plus_e_before_pytest = False
+            
+            for i, line in enumerate(lines_test):
+                if "pytest" in line:
+                    prev_lines = lines_test[:i]
+                    if any("set +e" in pl for pl in prev_lines):
+                        has_set_plus_e_before_pytest = True
+                    break
+
+            if has_set_e and not has_set_plus_e_before_pytest and ("pytest" in t_content):
+                self.add_check(
+                    "TEST_SH_REWARD_RELIABILITY", "Verifier Reward File Writing Reliability", "Testing", "FAIL",
+                    "tests/test.sh uses `set -e` without setting `set +e` before running `pytest`.",
+                    details="When `set -e` is active, if pytest returns a non-zero exit code (test failure), bash exits immediately before writing `/logs/verifier/reward.txt`, causing Harbor to throw `RewardFileNotFoundError`.",
+                    suggestion="Add `set +e` right before `pytest` in tests/test.sh, capture `$?`, and write reward score before exiting."
+                )
+            else:
+                self.add_check("TEST_SH_REWARD_RELIABILITY", "Verifier Reward File Writing Reliability", "Testing", "PASS", "test.sh safely handles pytest exit codes without suppressing reward file creation.")
 
         # Audit test_outputs.py docstrings
         test_py_path = os.path.join(self.task_root, "tests", "test_outputs.py")
