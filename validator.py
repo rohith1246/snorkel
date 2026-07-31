@@ -112,14 +112,14 @@ class SnorkelTaskValidator:
 
             is_milestone = number_of_milestones >= 2
 
-            # 3. Audit File Architecture & instruction.md Prompt Styling
+            # 3. Audit File Architecture & Humanized instruction.md Prompt Styling
             self._audit_file_architecture(is_milestone, number_of_milestones)
             self._audit_instruction_styling()
 
             # 4. Audit Dockerfile & Environment
             self._audit_dockerfile()
 
-            # 5. Audit Solution & Tests (including CTRF plugin installation check)
+            # 5. Audit Solution & Tests (Strict CTRF plugin & docstring checks)
             self._audit_solution_and_tests(is_milestone, number_of_milestones)
 
             # Final Score Normalization
@@ -275,23 +275,24 @@ class SnorkelTaskValidator:
         # Check for tables (|---|)
         has_tables = "|" in content and "---" in content
 
-        if has_headings or has_bullets or has_tables or len(paragraphs) < 2 or len(paragraphs) > 5:
+        # STRICT PROMPT STYLING RULE: Accept 1 to 5 paragraphs of clean, humanized, conversational prose!
+        if has_headings or has_bullets or has_tables or len(paragraphs) < 1 or len(paragraphs) > 5:
             violations = []
             if has_headings: violations.append("contains Markdown Headings (#, ##)")
             if has_bullets: violations.append("contains Bullet Lists (- or 1.)")
             if has_tables: violations.append("contains Markdown Tables (|---)")
-            if len(paragraphs) < 2 or len(paragraphs) > 5: violations.append(f"has {len(paragraphs)} paragraphs (must be 2-5 paragraphs)")
+            if len(paragraphs) < 1 or len(paragraphs) > 5: violations.append(f"has {len(paragraphs)} paragraphs (must be 1–5 paragraphs)")
 
             self.add_check(
-                "INSTRUCTION_STYLING", "instruction.md Conversational Prose Styling", "Documentation", "FAIL",
+                "INSTRUCTION_STYLING", "instruction.md Humanized Prose Styling", "Documentation", "FAIL",
                 f"instruction.md violates prompt styling guidelines: {', '.join(violations)}.",
-                details="Per Snorkel prompt guidelines, instruction.md must be 2–5 paragraphs of natural, conversational prose without headings, tables, or bullet lists.",
-                suggestion="Rewrite instruction.md into 2–5 paragraphs of plain conversational text without headings, bullets, or tables."
+                details="Per Snorkel prompt guidelines, instruction.md must be 1–5 paragraphs of clean, humanized, conversational prose without headings, tables, or bullet lists.",
+                suggestion="Rewrite instruction.md into 1–5 paragraphs of clean, humanized conversational text without headings, bullets, or tables."
             )
         else:
             self.add_check(
-                "INSTRUCTION_STYLING", "instruction.md Conversational Prose Styling", "Documentation", "PASS",
-                f"instruction.md is formatted in compliant conversational prose ({len(paragraphs)} paragraphs, no headings/tables/bullets)."
+                "INSTRUCTION_STYLING", "instruction.md Humanized Prose Styling", "Documentation", "PASS",
+                f"instruction.md is formatted in clean, humanized conversational prose ({len(paragraphs)} paragraph(s), no headings/tables/bullets)."
             )
 
     def _audit_dockerfile(self):
