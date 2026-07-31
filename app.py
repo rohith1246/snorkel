@@ -6,11 +6,13 @@ from flask import Flask, render_template, request, jsonify, Response
 from validator import SnorkelTaskValidator
 from groq_agent import GroqTaskAgent
 from db import TaskAuditDB
+from task_ideas_catalog import get_100_task_ideas
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500 MB max upload limit
 
 db = TaskAuditDB()
+ALL_TASK_IDEAS = get_100_task_ideas()
 
 @app.route('/')
 def index():
@@ -79,6 +81,39 @@ def audit_task_zip():
 def get_audit_history():
     history = db.get_recent_audits(limit=10)
     return jsonify({"status": "SUCCESS", "history": history})
+
+@app.route('/api/task-ideas', methods=['GET'])
+def get_task_ideas():
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 5))
+    category = request.args.get('category', 'all').strip().lower()
+    search = request.args.get('search', '').strip().lower()
+
+    filtered = ALL_TASK_IDEAS
+
+    if category != 'all':
+        filtered = [t for t in filtered if t['category'].lower() == category]
+
+    if search:
+        filtered = [t for t in filtered if search in t['name'].lower() or search in t['problem_statement'].lower() or search in t['hardening_mechanism'].lower()]
+
+    total_tasks = len(filtered)
+    total_pages = (total_tasks + per_page - 1) // per_page if total_tasks > 0 else 1
+    page = max(1, min(page, total_pages))
+
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    paginated_tasks = filtered[start_idx:end_idx]
+
+    return jsonify({
+        "status": "SUCCESS",
+        "total_tasks": total_tasks,
+        "total_pages": total_pages,
+        "current_page": page,
+        "per_page": per_page,
+        "built_by": "Rohith Vuppula",
+        "tasks": paginated_tasks
+    })
 
 if __name__ == '__main__':
     print("Starting Snorkel AI Benchmark Auditor Web Application on http://127.0.0.1:5000")

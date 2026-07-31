@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snorkel AI Task Auditor Agent - Built by Rohith Vuppula</title>
+    <title>Snorkel AI Task Auditor Agent & 100 Benchmark Task Ideas - Built by Rohith Vuppula</title>
     <!-- Inline SVG Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     <!-- Google Fonts: Inter & Fira Code -->
@@ -23,10 +23,10 @@
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
                 <div class="brand-text">
-                    <h1>Snorkel AI <span>Task Auditor</span></h1>
+                    <h1>Snorkel AI <span>Task Auditor & Idea Engine</span></h1>
                     <p class="brand-subtitle">
                         <span class="author-tag"><i class="fa-solid fa-code"></i> Built by <strong>Rohith Vuppula</strong></span>
-                        <span class="dot-separator">•</span> STB Harbor & Platform Submission Compliance Agent
+                        <span class="dot-separator">•</span> STB Harbor & Platform Compliance Agent
                     </p>
                 </div>
             </div>
@@ -44,8 +44,18 @@
             </div>
         </header>
 
-        <!-- Main Content Workspace -->
-        <main class="main-content">
+        <!-- Main Mode Switcher Navigation -->
+        <div class="mode-navigation white-card">
+            <button class="mode-nav-btn active" id="modeAuditorBtn">
+                <i class="fa-solid fa-file-shield"></i> Task Package Auditor
+            </button>
+            <button class="mode-nav-btn" id="modeIdeasBtn">
+                <i class="fa-solid fa-lightbulb"></i> 100 Hardened Task Ideas Catalogue <span class="badge badge-primary">5 per Page</span>
+            </button>
+        </div>
+
+        <!-- MODE 1: TASK AUDITOR SECTION -->
+        <main class="main-content mode-section active" id="sectionAuditor">
             <!-- Left Upload & Overview Column -->
             <section class="column column-left">
                 <!-- Drop Zone Card -->
@@ -166,10 +176,60 @@
             </section>
         </main>
 
+        <!-- MODE 2: 100 TASK IDEAS CATALOGUE SECTION -->
+        <main class="mode-section" id="sectionIdeas" style="display: none;">
+            <div class="card white-card ideas-header-card">
+                <div class="ideas-banner-title">
+                    <div>
+                        <h2><i class="fa-solid fa-lightbulb icon-blue"></i> 100 Hardened Benchmark Task Ideas</h2>
+                        <p>High-value task specifications designed to achieve <strong>1.000 Oracle score</strong> and <strong>0.000 LLM Agent score</strong> (Claude 3.5 / Opus 4.8 / GPT-4o / GPT-5.5).</p>
+                    </div>
+                    <span class="author-tag-lg"><i class="fa-solid fa-crown"></i> Curated by <strong>Rohith Vuppula</strong></span>
+                </div>
+
+                <!-- Controls Bar: Search & Category Filters -->
+                <div class="ideas-controls-bar">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="taskSearchInput" placeholder="Search 100 task ideas by name, mechanism, or category...">
+                    </div>
+                    <div class="category-filters" id="categoryFilters">
+                        <button class="cat-filter-btn active" data-cat="all">All (100)</button>
+                        <button class="cat-filter-btn" data-cat="system-administration">System Admin</button>
+                        <button class="cat-filter-btn" data-cat="machine-learning">Machine Learning</button>
+                        <button class="cat-filter-btn" data-cat="games">Games</button>
+                        <button class="cat-filter-btn" data-cat="security">Security</button>
+                        <button class="cat-filter-btn" data-cat="database">Database</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Ideas List Container (5 Per Page) -->
+            <div class="ideas-list-container" id="ideasListContainer">
+                <!-- Dynamically Populated 5 Task Cards -->
+            </div>
+
+            <!-- Pagination Bar (5 Per Page) -->
+            <div class="pagination-bar white-card" id="paginationBar">
+                <div class="pagination-info" id="paginationInfo">
+                    Showing Tasks <strong>1 - 5</strong> of <strong>100</strong>
+                </div>
+                <div class="pagination-controls">
+                    <button class="btn btn-outline" id="prevPageBtn" disabled>
+                        <i class="fa-solid fa-chevron-left"></i> Previous
+                    </button>
+                    <span class="page-num-badge" id="pageNumBadge">Page 1 of 20</span>
+                    <button class="btn btn-outline" id="nextPageBtn">
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+
         <!-- Footer -->
         <footer class="app-footer">
             <p>
-                <strong>Snorkel AI Benchmark Task Auditor Agent</strong> • Built by <strong>Rohith Vuppula</strong>
+                <strong>Snorkel AI Benchmark Task Auditor Agent & 100 Task Ideas Engine</strong> • Built by <strong>Rohith Vuppula</strong>
                 <span class="dot-separator">•</span> Powered by Groq AI & STB Harbor Verifier Rules
             </p>
         </footer>
