@@ -447,23 +447,30 @@ class SnorkelTaskValidator:
                                "tests/test.sh should use `--ctrf /logs/verifier/ctrf.json` and write `1` or `0` to `/logs/verifier/reward.txt`.",
                                suggestion="Update test.sh to execute pytest with CTRF reporting and write reward score.")
 
-            # Check if set -e causes early exit before writing reward.txt on test failure
+            # Check if set -e is active before pytest without set +e
             lines_test = [l.strip() for l in t_content.splitlines()]
-            has_set_e = any(l.startswith("set -e") or "set -euo pipefail" in l for l in lines_test)
-            has_set_plus_e_before_pytest = False
-            
+            pytest_idx = -1
+            set_e_before_pytest = False
+            set_plus_e_before_pytest = False
+
             for i, line in enumerate(lines_test):
                 if "pytest" in line:
-                    prev_lines = lines_test[:i]
-                    if any("set +e" in pl for pl in prev_lines):
-                        has_set_plus_e_before_pytest = True
+                    pytest_idx = i
                     break
 
-            if has_set_e and not has_set_plus_e_before_pytest and ("pytest" in t_content):
+            if pytest_idx != -1:
+                prev_lines = lines_test[:pytest_idx]
+                for pl in prev_lines:
+                    if pl.startswith("set -e") or "set -euo pipefail" in pl or "set -e" in pl:
+                        set_e_before_pytest = True
+                    if "set +e" in pl:
+                        set_plus_e_before_pytest = True
+
+            if set_e_before_pytest and not set_plus_e_before_pytest:
                 self.add_check(
                     "TEST_SH_REWARD_RELIABILITY", "Verifier Reward File Writing Reliability", "Testing", "FAIL",
-                    "tests/test.sh uses `set -e` without setting `set +e` before running `pytest`.",
-                    details="When `set -e` is active, if pytest returns a non-zero exit code (test failure), bash exits immediately before writing `/logs/verifier/reward.txt`, causing Harbor to throw `RewardFileNotFoundError`.",
+                    "tests/test.sh uses `set -e` before `pytest` without disabling it via `set +e`.",
+                    details="When `set -e` is active during pytest execution, if pytest returns a non-zero exit code (test failure), bash exits immediately before writing `/logs/verifier/reward.txt`, causing Harbor to throw `RewardFileNotFoundError`.",
                     suggestion="Add `set +e` right before `pytest` in tests/test.sh, capture `$?`, and write reward score before exiting."
                 )
             else:
