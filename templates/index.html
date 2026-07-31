@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snorkel AI Task Auditor Agent - Built by Rohith Vuppula</title>
+    <!-- Inline SVG Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+    <!-- Google Fonts: Inter & Fira Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="light-theme">
+    <div class="app-container">
+        <!-- Top Navigation Header -->
+        <header class="navbar white-card">
+            <div class="brand">
+                <div class="brand-badge-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>Snorkel AI <span>Task Auditor</span></h1>
+                    <p class="brand-subtitle">
+                        <span class="author-tag"><i class="fa-solid fa-code"></i> Built by <strong>Rohith Vuppula</strong></span>
+                        <span class="dot-separator">•</span> STB Harbor & Platform Submission Compliance Agent
+                    </p>
+                </div>
+            </div>
+            <div class="nav-controls">
+                <div class="api-key-input-wrapper">
+                    <i class="fa-solid fa-key key-icon"></i>
+                    <input type="password" id="groqApiKey" placeholder="Groq API Key (Pre-configured)..." autocomplete="off">
+                    <button type="button" class="btn-icon" id="toggleKeyVisibility" title="Toggle Key Visibility">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                <button class="btn btn-outline" id="openHistoryBtn">
+                    <i class="fa-solid fa-clock-rotate-left"></i> History
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Workspace -->
+        <main class="main-content">
+            <!-- Left Upload & Overview Column -->
+            <section class="column column-left">
+                <!-- Drop Zone Card -->
+                <div class="card white-card upload-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-file-zipper icon-blue"></i> Upload Task ZIP Package</h2>
+                        <span class="badge badge-primary"><i class="fa-solid fa-check"></i> v2.0 Schema Ready</span>
+                    </div>
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="zipFileInput" accept=".zip" hidden>
+                        <div class="upload-zone-content">
+                            <div class="icon-circle">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </div>
+                            <h3>Drag & Drop Task <code>.zip</code> file here</h3>
+                            <p>or click to browse your files</p>
+
+                            <div class="selected-file-info" id="selectedFileInfo" style="display: none;">
+                                <i class="fa-solid fa-file-archive"></i>
+                                <span id="fileName">task_package.zip</span>
+                                <span id="fileSize">0 MB</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="upload-actions">
+                        <button class="btn btn-primary btn-lg" id="runAuditBtn" disabled>
+                            <i class="fa-solid fa-bolt"></i> Run Snorkel Compliance Audit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Score Meter Card -->
+                <div class="card white-card score-card" id="scoreCard" style="display: none;">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-chart-pie icon-blue"></i> Compliance Rating</h2>
+                        <span id="taskNameBadge" class="badge badge-neutral">Task: Unknown</span>
+                    </div>
+
+                    <div class="score-grid">
+                        <div class="score-gauge-container">
+                            <div class="score-circle" id="scoreCircle">
+                                <span class="score-value" id="scoreValue">0</span>
+                                <span class="score-label">/ 100</span>
+                            </div>
+                        </div>
+                        <div class="summary-metrics">
+                            <div class="metric-box metric-pass">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span class="metric-num" id="passCount">0</span>
+                                <span class="metric-lbl">Passed</span>
+                            </div>
+                            <div class="metric-box metric-fail">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                                <span class="metric-num" id="failCount">0</span>
+                                <span class="metric-lbl">Failed</span>
+                            </div>
+                            <div class="metric-box metric-warn">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span class="metric-num" id="warnCount">0</span>
+                                <span class="metric-lbl">Warnings</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-banner" id="summaryBanner">
+                        <i class="fa-solid fa-circle-info icon-blue"></i>
+                        <span id="summaryText">Upload a task ZIP to view audit score.</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Results Column -->
+            <section class="column column-right">
+                <div class="card white-card results-card" id="resultsCard" style="display: none;">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" data-tab="tab-findings">
+                            <i class="fa-solid fa-list-check"></i> Rule Audit Findings
+                        </button>
+                        <button class="tab-btn" data-tab="tab-ai">
+                            <i class="fa-solid fa-brain"></i> Groq AI Llama 3.3 Fixes
+                        </button>
+                        <button class="tab-btn" data-tab="tab-files">
+                            <i class="fa-solid fa-folder-tree"></i> ZIP File Tree
+                        </button>
+                    </div>
+
+                    <div class="tab-content active" id="tab-findings">
+                        <div class="findings-filter">
+                            <button class="filter-btn active" data-filter="all">All Checks</button>
+                            <button class="filter-btn" data-filter="FAIL">Failed Only</button>
+                            <button class="filter-btn" data-filter="WARN">Warnings Only</button>
+                            <button class="filter-btn" data-filter="PASS">Passed Only</button>
+                        </div>
+                        <div class="findings-list" id="findingsList">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-ai">
+                        <div class="ai-header-banner">
+                            <div class="ai-badge">
+                                <i class="fa-solid fa-sparkles"></i> Groq AI Llama 3.3 70B Patch Engine
+                            </div>
+                            <span class="ai-source" id="aiSourceTag">Source: Groq AI</span>
+                        </div>
+                        <div class="ai-analysis-content" id="aiAnalysisContent">
+                            <p class="placeholder-text">Run an audit to view AI code fixes and recommendations.</p>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-files">
+                        <div class="file-tree-container" id="fileTreeContainer">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>
+                <strong>Snorkel AI Benchmark Task Auditor Agent</strong> • Built by <strong>Rohith Vuppula</strong>
+                <span class="dot-separator">•</span> Powered by Groq AI & STB Harbor Verifier Rules
+            </p>
+        </footer>
+    </div>
+
+    <!-- History Drawer Modal -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal white-card">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-clock-rotate-left icon-blue"></i> Audit Execution History</h2>
+                <button class="close-btn" id="closeHistoryBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-list" id="historyList">
+                    <p class="placeholder-text">No previous audit logs found.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="spinner-container">
+            <div class="spinner"></div>
+            <div class="loading-text">
+                <h3>Auditing Snorkel Task Package...</h3>
+                <p>Verifying 25+ STB Harbor checks & consulting Groq AI Agent</p>
+                <small>Built by Rohith Vuppula</small>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

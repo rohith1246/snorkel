@@ -1,0 +1,4 @@
+pytest==8.4.1
+pytest-json-ctrf==0.3.5
+pydot==3.0.1
+requests==2.32.3

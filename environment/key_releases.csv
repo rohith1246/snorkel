@@ -1,0 +1,10 @@
+key_id,client_id,version_tag,release_date,status
+key_001,client_001,v1.0.0-active,2026-01-15,RELEASED
+key_002,client_002,v1.0.0-key-revoked,2026-02-01,REVOKED
+key_003,client_003,v1.0.1-active,2026-03-10,RELEASED
+key_004,client_004,v1.0.2-active,2026-04-05,RELEASED
+key_005,client_005,v1.3.0-unrevoked-notice,2026-05-10,RELEASED
+key_006,client_006,v1.0.3-revoked,2026-06-01,RELEASED
+key_007,client_007,v1.0.4-active,2026-07-01,RELEASED
+key_008,client_008,v1.0.5-revoked-status-clear,2026-07-15,RELEASED
+key_009,client_009,v1.0.6-active,2026-07-20,RELEASED
