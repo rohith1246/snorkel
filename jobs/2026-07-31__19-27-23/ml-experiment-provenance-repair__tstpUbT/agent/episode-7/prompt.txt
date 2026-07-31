@@ -1,0 +1,49 @@
+Previous response had warnings:
+WARNINGS: - Extra text detected before JSON object
+- Extra text detected after JSON object
+
+New Terminal Output:
+
+root@154a2b37575e:/app# chmod +x /app/solution/solve.sh && /app/solution/solve.sh
+Wrote /app/output/provenance_report.json
+root@154a2b37575e:/app# cat /app/output/provenance_report.json
+{
+  "status": "SUCCESS",
+  "summary": {
+    "total_records": 5,
+    "valid_records": 4,
+    "repaired_lineages": 1,
+    "corrupted_records_excluded": 1
+  },
+  "provenance_tree": [
+    {
+      "run_id": "run-exp-001",
+      "parent_run_id": "ROOT",
+      "depth": 0,
+      "checkpoint_hash": "ckpt-sha256-001a",
+      "status": "VALID"
+    },
+    {
+      "run_id": "run-exp-002",
+      "parent_run_id": "run-exp-001",
+      "depth": 1,
+      "checkpoint_hash": "ckpt-sha256-002b",
+      "status": "VALID"
+    },
+    {
+      "run_id": "run-exp-003",
+      "parent_run_id": "run-exp-002",
+      "depth": 2,
+      "checkpoint_hash": "ckpt-sha256-003c",
+      "status": "VALID"
+    },
+    {
+      "run_id": "run-exp-004",
+      "parent_run_id": "run-exp-003",
+      "depth": 3,
+      "checkpoint_hash": "ckpt-sha256-004d",
+      "status": "VALID"
+    }
+  ]
+}
+root@154a2b37575e:/app#

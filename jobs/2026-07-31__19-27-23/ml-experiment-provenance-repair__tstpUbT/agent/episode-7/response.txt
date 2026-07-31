@@ -1,0 +1,12 @@
+The solution works perfectly. Let me verify the output is valid JSON.
+
+```json
+{
+  "analysis": "The report is generated correctly: 5 total records, 4 valid (005 corrupted/excluded), 1 repaired lineage (run-exp-003 imputed to parent run-exp-002 via checkpoint matching), and correct topological depths (001=0 ROOT, 002=1, 003=2, 004=3). All requirements met: status SUCCESS, summary with all 4 metrics, provenance_tree with run_id/parent_run_id/depth/checkpoint_hash/status. Two-space indentation used.",
+  "plan": "Final validation that the JSON parses cleanly.",
+  "commands": [
+    {"keystrokes": "python3 -c \"import json; print('VALID JSON' if json.load(open('/app/output/provenance_report.json')) else '')\"\n", "duration": 0.3}
+  ],
+  "task_complete": true
+}
+```

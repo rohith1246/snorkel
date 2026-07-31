@@ -1,0 +1,16 @@
+Previous response had warnings:
+WARNINGS: - Extra text detected before JSON object
+- Extra text detected after JSON object
+
+New Terminal Output:
+
+root@154a2b37575e:/app# python3 -c "import zlib; d=open('/app/data/lineage_graph.bin','rb').read()
+> for i in range(5):
+>   rec=d[12+i*52:12+i*52+52]; p=rec[:48]; c=int.from_bytes(rec[48:52],'big'); print(i, p[:16].split(b'\\x00')[0], hex(c), hex(zlib.crc32(p)), c==zlib.crc32(p))
+"
+0 b'run-exp-001' 0x8effb815 0x8effb815 True
+1 b'run-exp-002' 0x41dfe9cb 0x41dfe9cb True
+2 b'run-exp-003' 0xffd5aaee 0xffd5aaee True
+3 b'run-exp-004' 0xeb792a99 0xeb792a99 True
+4 b'run-exp-005' 0x37525e7e 0xe9ffe091 False
+root@154a2b37575e:/app#

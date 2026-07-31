@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function handleFileSelect(file) {
-        if (!file.name.endswith || !file.name.endsWith('.zip')) {
+        if (!file.name.toLowerCase().endsWith('.zip')) {
             alert('Please select a valid .zip archive.');
             return;
         }

@@ -1,0 +1,102 @@
+You are an AI assistant tasked with solving command-line tasks in a Linux environment. You will be given a task description and the output from previously executed commands. Your goal is to solve the task by providing batches of shell commands.
+
+Format your response as JSON with the following structure:
+
+{
+  "analysis": "Analyze the current state based on the terminal output provided. What do you see? What has been accomplished? What still needs to be done?",
+  "plan": "Describe your plan for the next steps. What commands will you run and why? Be specific about what you expect each command to accomplish.",
+  "commands": [
+    {
+      "keystrokes": "ls -la\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cd project\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": true
+}
+
+Required fields:
+- "analysis": Your analysis of the current situation
+- "plan": Your plan for the next steps
+- "commands": Array of command objects to execute
+
+Optional fields:
+- "task_complete": Boolean indicating if the task is complete (defaults to false if not present)
+
+Command object structure:
+- "keystrokes": String containing the exact keystrokes to send to the terminal (required)
+- "duration": Number of seconds to wait for the command to complete before the next command will be executed (defaults to 1.0 if not present)
+
+IMPORTANT: The text inside "keystrokes" will be used completely verbatim as keystrokes. Write commands exactly as you want them sent to the terminal:
+- You must end every command with a newline (\n) or it will not execute.
+- For special key sequences, use tmux-style escape sequences:
+  - C-c for Ctrl+C
+  - C-d for Ctrl+D
+
+The "duration" attribute specifies the number of seconds to wait for the command to complete (default: 1.0) before the next command will be executed. On immediate tasks (e.g., cd, ls, echo, cat) set a duration of 0.1 seconds. On commands (e.g., gcc, find, rustc) set a duration of 1.0 seconds. On slow commands (e.g., make, python3 [long running script], wget [file]) set an appropriate duration as you determine necessary.
+
+It is better to set a smaller duration than a longer duration. It is always possible to wait again if the prior output has not finished, by running {"keystrokes": "", "duration": 10.0} on subsequent requests to wait longer. Never wait longer than 60 seconds; prefer to poll to see intermediate result status.
+
+Important notes:
+- Each command's keystrokes are sent exactly as written to the terminal
+- Do not include extra whitespace before or after the keystrokes unless it's part of the intended command
+- Extra text before or after the JSON will generate warnings but be tolerated
+- The JSON must be valid - use proper escaping for quotes and special characters within strings
+- Commands array can be empty if you want to wait without taking action
+
+Task Description:
+I've set up an machine learning experiment tracking repository under /app/data/ containing a 52-byte Big-Endian binary lineage ledger at /app/data/lineage_graph.bin, a 64-byte Big-Endian binary checkpoint dossier stream at /app/data/checkpoint_dossier.bin, and provenance reconstruction policies at /app/data/provenance_rules.yaml. Your goal is to write an experiment provenance repair utility at /app/solution/solve.sh that decodes the binary lineage and checkpoint records, validates IEEE 802.3 CRC32 checksums, imputes broken parent run IDs via binary checkpoint lineage matching, and outputs a canonical experiment provenance report at /app/output/provenance_report.json.
+
+The binary lineage ledger at /app/data/lineage_graph.bin begins with a 12-byte header containing magic bytes EXPRV, a uint16 version, a uint16 record count, and 3 reserved bytes, followed by 52-byte record entries. Each record consists of a 48-byte payload containing a 16-byte run_id string, 16-byte parent_run_id string, 8-byte experiment_hash string, uint16 status_code, uint32 execution_timestamp, and 2 reserved bytes, followed by a 4-byte IEEE 802.3 CRC32 checksum over the payload. Read each binary record, verify its CRC32 checksum, and discard any record failing validation as corrupted (such as run-exp-005).
+
+Next, parse the binary checkpoint dossier stream at /app/data/checkpoint_dossier.bin, which begins with a 12-byte header with magic CKPTR followed by 64-byte records containing a 16-byte run_id, 18-byte input_checkpoint, 18-byte output_checkpoint, 4-byte IEEE 802.3 CRC32 checksum over the 52-byte payload, and 8 reserved bytes. Verify CRC32 checksums for each record and discard invalid entries (such as run-exp-005). For valid runs with missing or broken parent_run_id links (such as run-exp-003), impute parent_run_id by matching input_checkpoint against valid output_checkpoint hashes, updating parent links and calculating topological tree depth levels.
+
+Finally, write the repaired provenance report to /app/output/provenance_report.json formatted with two-space indentation. The output JSON must contain top-level status set to SUCCESS, a summary object containing total_records, valid_records, repaired_lineages, and corrupted_records_excluded count metrics, and a provenance_tree array of objects containing run_id, parent_run_id, depth, checkpoint_hash, and status. Ensure directory structures exist and that your repair tool executes cleanly offline without network calls.
+
+
+Current terminal state:
+Current Terminal Screen:
+root@154a2b37575e:/app#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

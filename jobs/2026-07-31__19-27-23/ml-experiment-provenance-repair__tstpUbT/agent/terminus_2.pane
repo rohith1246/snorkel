@@ -1,0 +1,258 @@
+[?2004hroot@154a2b37575e:/app# asciinema rec --stdin /logs/agent/recording.cast
+[?2004l[0;32masciinema: recording asciicast to /logs/agent/recording.cast[0m
+[0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
+[?2004hroot@154a2b37575e:/app# clear
+[?2004l[H[J[3J[?2004hroot@154a2b37575e:/app# ls -la /app/data/
+[?2004ltotal 20
+drwxr-xr-x 2 root root 4096 Jul 31 19:26 .
+drwxr-xr-x 1 root root 4096 Jul 31 19:26 ..
+-rw-r--r-- 1 root root  332 Jul 31 19:26 checkpoint_dossier.bin
+-rw-r--r-- 1 root root  272 Jul 31 19:26 lineage_graph.bin
+-rw-r--r-- 1 root root  111 Jul 31 19:26 provenance_rules.yaml
+[?2004hroot@154a2b37575e:/app# cat /app/data/provenance_rules.yaml
+[?2004lrules:
+  impute_missing_parent_by_checkpoint: true
+  max_provenance_depth: 10
+  require_crc32_validation: true
+[?2004hroot@154a2b37575e:/app# xxd /app/data/lineage_graph.bin
+[?2004lbash: xxd: command not found
+[?2004hroot@154a2b37575e:/app# od -A d -t x1z /app/data/lineage_graph.bin
+[?2004l0000000 45 58 50 52 56 00 01 00 05 00 00 00 72 75 6e 2d  >EXPRV.......run-<
+0000016 65 78 70 2d 30 30 31 00 00 00 00 00 00 00 00 00  >exp-001.........<
+0000032 00 00 00 00 00 00 00 00 00 00 00 00 68 61 73 68  >............hash<
+0000048 2d 72 30 31 00 01 65 53 f1 00 00 00 8e ff b8 15  >-r01..eS........<
+0000064 72 75 6e 2d 65 78 70 2d 30 30 32 00 00 00 00 00  >run-exp-002.....<
+0000080 72 75 6e 2d 65 78 70 2d 30 30 31 00 00 00 00 00  >run-exp-001.....<
+0000096 68 61 73 68 2d 72 30 32 00 01 65 53 f1 64 00 00  >hash-r02..eS.d..<
+0000112 41 df e9 cb 72 75 6e 2d 65 78 70 2d 30 30 33 00  >A...run-exp-003.<
+0000128 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  >................<
+0000144 00 00 00 00 68 61 73 68 2d 72 30 33 00 01 65 53  >....hash-r03..eS<
+0000160 f1 c8 00 00 ff d5 aa ee 72 75 6e 2d 65 78 70 2d  >........run-exp-<
+0000176 30 30 34 00 00 00 00 00 72 75 6e 2d 65 78 70 2d  >004.....run-exp-<
+0000192 30 30 33 00 00 00 00 00 68 61 73 68 2d 72 30 34  >003.....hash-r04<
+0000208 00 01 65 53 f2 2c 00 00 eb 79 2a 99 72 75 6e 2d  >..eS.,...y*.run-<
+0000224 65 78 70 2d 30 30 35 00 00 00 00 00 72 75 6e 2d  >exp-005.....run-<
+0000240 65 78 70 2d 30 30 34 00 00 00 00 00 68 61 73 68  >exp-004.....hash<
+0000256 2d 72 30 35 00 02 65 53 f2 90 00 00 37 52 5e 7e  >-r05..eS....7R^~<
+0000272
+[?2004hroot@154a2b37575e:/app# od -A d -t x1z /app/data/checkpoint_dossier.bin
+[?2004l0000000 43 4b 50 54 52 00 01 00 05 00 00 00 72 75 6e 2d  >CKPTR.......run-<
+0000016 65 78 70 2d 30 30 31 00 00 00 00 00 00 00 00 00  >exp-001.........<
+0000032 00 00 00 00 00 00 00 00 00 00 00 00 00 00 63 6b  >..............ck<
+0000048 70 74 2d 73 68 61 32 35 36 2d 30 30 31 61 00 00  >pt-sha256-001a..<
+0000064 f8 f9 f7 58 00 00 00 00 00 00 00 00 72 75 6e 2d  >...X........run-<
+0000080 65 78 70 2d 30 30 32 00 00 00 00 00 63 6b 70 74  >exp-002.....ckpt<
+0000096 2d 73 68 61 32 35 36 2d 30 30 31 61 00 00 63 6b  >-sha256-001a..ck<
+0000112 70 74 2d 73 68 61 32 35 36 2d 30 30 32 62 00 00  >pt-sha256-002b..<
+0000128 1a 10 3b f5 00 00 00 00 00 00 00 00 72 75 6e 2d  >..;.........run-<
+0000144 65 78 70 2d 30 30 33 00 00 00 00 00 63 6b 70 74  >exp-003.....ckpt<
+0000160 2d 73 68 61 32 35 36 2d 30 30 32 62 00 00 63 6b  >-sha256-002b..ck<
+0000176 70 74 2d 73 68 61 32 35 36 2d 30 30 33 63 00 00  >pt-sha256-003c..<
+0000192 40 31 9d ea 00 00 00 00 00 00 00 00 72 75 6e 2d  >@1..........run-<
+0000208 65 78 70 2d 30 30 34 00 00 00 00 00 63 6b 70 74  >exp-004.....ckpt<
+0000224 2d 73 68 61 32 35 36 2d 30 30 33 63 00 00 63 6b  >-sha256-003c..ck<
+0000240 70 74 2d 73 68 61 32 35 36 2d 30 30 34 64 00 00  >pt-sha256-004d..<
+0000256 81 15 c6 80 00 00 00 00 00 00 00 00 72 75 6e 2d  >............run-<
+0000272 65 78 70 2d 30 30 35 00 00 00 00 00 63 6b 70 74  >exp-005.....ckpt<
+0000288 2d 73 68 61 32 35 36 2d 30 30 34 64 00 00 63 6b  >-sha256-004d..ck<
+0000304 70 74 2d 73 68 61 32 35 36 2d 30 30 35 65 00 00  >pt-sha256-005e..<
+0000320 5f 92 4d 9a 00 00 00 00 00 00 00 00              >_.M.........<
+0000332
+[?2004hroot@154a2b37575e:/app# python3 -c "import zlib; d=open('/app/data/lineage_graph.bin','rb').read()
+[?2004l[?2004h> for i in range(5):
+[?2004l[?2004h>   rec=d[12+i*52:12+i*52+52]; p=rec[:48]; c=int.from_bytes(rec[48:52],'big'); print(i, p[:16].split(b'\\x00')[0], hex(c), hex(zlib.crc32(p)), c==zlib.crc32(p))"
+[?2004l0 b'run-exp-001' 0x8effb815 0x8effb815 True
+1 b'run-exp-002' 0x41dfe9cb 0x41dfe9cb True
+2 b'run-exp-003' 0xffd5aaee 0xffd5aaee True
+3 b'run-exp-004' 0xeb792a99 0xeb792a99 True
+4 b'run-exp-005' 0x37525e7e 0xe9ffe091 False
+[?2004hroot@154a2b37575e:/app# python3 -c "import zlib; d=open('/app/data/checkpoint_dossier.bin','rb').read()
+[?2004l[?2004h> for i in range(5):
+[?2004l[?2004h>   rec=d[12+i*64:12+i*64+64]; p=rec[:52]; c=int.from_bytes(rec[52:56],'big'); rid=rec[:16].split(b'\\x00')[0]; inp=rec[16:34].split(b'\\x00')[0]; out=rec[34:52].split(b'\\x00')[0]; print(rid, inp, out, hex(c), hex(zlib.crc32(p)), c==zlib.crc32(p))"
+[?2004lb'run-exp-001' b'' b'ckpt-sha256-001a' 0xf8f9f758 0xf8f9f758 True
+b'run-exp-002' b'ckpt-sha256-001a' b'ckpt-sha256-002b' 0x1a103bf5 0x1a103bf5 True
+b'run-exp-003' b'ckpt-sha256-002b' b'ckpt-sha256-003c' 0x40319dea 0x40319dea True
+b'run-exp-004' b'ckpt-sha256-003c' b'ckpt-sha256-004d' 0x8115c680 0x8115c680 True
+b'run-exp-005' b'ckpt-sha256-004d' b'ckpt-sha256-005e' 0x5f924d9a 0x956cf724 False
+[?2004hroot@154a2b37575e:/app# mkdir -p /app/solution /app/output
+[?2004l[?2004hroot@154a2b37575e:/app# cat > /app/solution/solve.sh <<'EOF'
+[?2004l[?2004h> #!/bin/bash
+[?2004l[?2004h> set -euo pipefail
+[?2004l[?2004h> 
+[?2004l[?2004h> DATA_DIR="/app/data"
+[?2004l[?2004h> OUT_DIR="/app/output"
+[?2004l[?2004h> mkdir -p "$OUT_DIR"
+[?2004l[?2004h> 
+[?2004l[?2004h> python3 - <<'PYEOF'
+[?2004l[?2004h> import zlib, json, struct
+[?2004l[?2004h> 
+[?2004l[?2004h> DATA="/app/data"
+[?2004l[?2004h> OUT="/app/output/provenance_report.json"
+[?2004l[?2004h> 
+[?2004l[?2004h> BROKEN_MARKERS = {"", "NULL", "0000000000000000"}
+[?2004l[?2004h> ROOT="ROOT"
+[?2004l[?2004h> 
+[?2004l[?2004h> def cstr(b):
+[?2004l[?2004h>     return b.split(b"\x00")[0].decode("ascii", "replace")
+[?2004l[?2004h> 
+[?2004l[?2004h> # ---- Parse lineage ledger ----
+[?2004l[?2004h> lg = open(f"{DATA}/lineage_graph.bin","rb").read()
+[?2004l[?2004h> assert lg[:5]==b"EXPRV", "bad lineage magic"
+[?2004l[?2004h> version, count = struct.unpack(">HH", lg[5:9])
+[?2004l[?2004h> REC=52
+[?2004l[?2004h> lineage=[]
+[?2004l[?2004h> corrupted=0
+[?2004l[?2004h> total=0
+[?2004l[?2004h> for i in range(count):
+[?2004l[?2004h>     off=12+i*REC
+[?2004l[?2004h>     rec=lg[off:off+REC]
+[?2004l[?2004h>     if len(rec)<REC: break
+[?2004l[?2004h>     total+=1
+[?2004l[?2004h>     payload=rec[:48]
+[?2004l[?2004h>     stored=int.from_bytes(rec[48:52],"big")
+[?2004l[?2004h>     if zlib.crc32(payload)!=stored:
+[?2004l[?2004h>         corrupted+=1
+[?2004l[?2004h>         continue
+[?2004l[?2004h>     run_id=cstr(payload[0:16])
+[?2004l[?2004h>     parent=cstr(payload[16:32])
+[?2004l[?2004h>     exp_hash=cstr(payload[32:40])
+[?2004l[?2004h>     status_code, ts = struct.unpack(">HI", payload[40:46])
+[?2004l[?2004h>     lineage.append({"run_id":run_id,"parent_run_id":parent,
+[?2004l[?2004h>                     "experiment_hash":exp_hash,"status_code":status_code,
+[?2004l[?2004h>                     "timestamp":ts})
+[?2004l[?2004h> 
+[?2004l[?2004h> # ---- Parse checkpoint dossier ----
+[?2004l[?2004h> ck = open(f"{DATA}/checkpoint_dossier.bin","rb").read()
+[?2004l[?2004h> assert ck[:5]==b"CKPTR", "bad checkpoint magic"
+[?2004l[?2004h> cversion, ccount = struct.unpack(">HH", ck[5:9])
+[?2004l[?2004h> CREC=64
+[?2004l[?2004h> checkpoints={}
+[?2004l[?2004h> for i in range(ccount):
+[?2004l[?2004h>     off=12+i*CREC
+[?2004l[?2004h>     rec=ck[off:off+CREC]
+[?2004l[?2004h>     if len(rec)<CREC: break
+[?2004l[?2004h>     payload=rec[:52]
+[?2004l[?2004h>     stored=int.from_bytes(rec[52:56],"big")
+[?2004l[?2004h>     if zlib.crc32(payload)!=stored:
+[?2004l[?2004h>         continue
+[?2004l[?2004h>     run_id=cstr(payload[0:16])
+[?2004l[?2004h>     inp=cstr(payload[16:34])
+[?2004l[?2004h>     out=cstr(payload[34:52])
+[?2004l[?2004h>     checkpoints[run_id]={"input":inp,"output":out}
+[?2004l[?2004h> 
+[?2004l[?2004h> # Only keep lineage runs that also have a valid checkpoint
+[?2004l[?2004h> valid_runs={r["run_id"] for r in lineage} & set(checkpoints.keys())
+[?2004l[?2004h> lineage=[r for r in lineage if r["run_id"] in valid_runs]
+[?2004l[?2004h> 
+[?2004l[?2004h> # Build output_checkpoint -> run_id map
+[?2004l[?2004h> out_map={}
+[?2004l[?2004h> for rid in valid_runs:
+[?2004l[?2004h>     out_c=checkpoints[rid]["output"]
+[?2004l[?2004h>     if out_c:
+[?2004l[?2004h>         out_map[out_c]=rid
+[?2004l[?2004h> 
+[?2004l[?2004h> # ---- Impute broken parents ----
+[?2004l[?2004h> repaired=0
+[?2004l[?2004h> for r in lineage:
+[?2004l[?2004h>     rid=r["run_id"]
+[?2004l[?2004h>     parent=r["parent_run_id"]
+[?2004l[?2004h>     if parent in BROKEN_MARKERS:
+[?2004l[?2004h>         inp=checkpoints[rid]["input"]
+[?2004l[?2004h>         if inp and inp in out_map:
+[?2004l[?2004h>             r["parent_run_id"]=out_map[inp]
+[?2004l[?2004h>             repaired+=1
+[?2004l[?2004h>         else:
+[?2004l[?2004h>             r["parent_run_id"]=ROOT
+[?2004l[?2004h> 
+[?2004l[?2004h> # ---- Topological depth ----
+[?2004l[?2004h> by_id={r["run_id"]:r for r in lineage}
+[?2004l[?2004h> depth_cache={}
+[?2004l[?2004h> def depth(rid, seen=None):
+[?2004l[?2004h>     if seen is None: seen=set()
+[?2004l[?2004h>     if rid in depth_cache: return depth_cache[rid]
+[?2004l[?2004h>     if rid in seen: return 0
+[?2004l[?2004h>     seen.add(rid)
+[?2004l[?2004h>     r=by_id.get(rid)
+[?2004l[?2004h>     if r is None: return 0
+[?2004l[?2004h>     p=r["parent_run_id"]
+[?2004l[?2004h>     if p==ROOT or p in BROKEN_MARKERS or p not in by_id:
+[?2004l[?2004h>         d=0
+[?2004l[?2004h>     else:
+[?2004l[?2004h>         d=depth(p, seen)+1
+[?2004l[?2004h>     depth_cache[rid]=d
+[?2004l[?2004h>     return d
+[?2004l[?2004h> 
+[?2004l[?2004h> tree=[]
+[?2004l[?2004h> for r in sorted(lineage, key=lambda x:x["run_id"]):
+[?2004l[?2004h>     rid=r["run_id"]
+[?2004l[?2004h>     d=depth(rid)
+[?2004l[?2004h>     tree.append({
+[?2004l[?2004h>         "run_id":rid,
+[?2004l[?2004h>         "parent_run_id":r["parent_run_id"],
+[?2004l[?2004h>         "depth":d,
+[?2004l[?2004h>         "checkpoint_hash":checkpoints[rid]["output"],
+[?2004l[?2004h>         "status":"VALID"
+[?2004l[?2004h>     })
+[?2004l[?2004h> 
+[?2004l[?2004h> report={
+[?2004l[?2004h>     "status":"SUCCESS",
+[?2004l[?2004h>     "summary":{
+[?2004l[?2004h>         "total_records":total,
+[?2004l[?2004h>         "valid_records":len(lineage),
+[?2004l[?2004h>         "repaired_lineages":repaired,
+[?2004l[?2004h>         "corrupted_records_excluded":corrupted
+[?2004l[?2004h>     },
+[?2004l[?2004h>     "provenance_tree":tree
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> with open(OUT,"w") as f:
+[?2004l[?2004h>     json.dump(report,f,indent=2)
+[?2004l[?2004h>     f.write("\n")
+[?2004l[?2004h> print("Wrote", OUT)
+[?2004l[?2004h> PYEOF
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@154a2b37575e:/app# chmod +x /app/solution/solve.sh && /app/solution/solve.sh
+[?2004lWrote /app/output/provenance_report.json
+[?2004hroot@154a2b37575e:/app# cat /app/output/provenance_report.json
+[?2004l{
+  "status": "SUCCESS",
+  "summary": {
+    "total_records": 5,
+    "valid_records": 4,
+    "repaired_lineages": 1,
+    "corrupted_records_excluded": 1
+  },
+  "provenance_tree": [
+    {
+      "run_id": "run-exp-001",
+      "parent_run_id": "ROOT",
+      "depth": 0,
+      "checkpoint_hash": "ckpt-sha256-001a",
+      "status": "VALID"
+    },
+    {
+      "run_id": "run-exp-002",
+      "parent_run_id": "run-exp-001",
+      "depth": 1,
+      "checkpoint_hash": "ckpt-sha256-002b",
+      "status": "VALID"
+    },
+    {
+      "run_id": "run-exp-003",
+      "parent_run_id": "run-exp-002",
+      "depth": 2,
+      "checkpoint_hash": "ckpt-sha256-003c",
+      "status": "VALID"
+    },
+    {
+      "run_id": "run-exp-004",
+      "parent_run_id": "run-exp-003",
+      "depth": 3,
+      "checkpoint_hash": "ckpt-sha256-004d",
+      "status": "VALID"
+    }
+  ]
+}
+[?2004hroot@154a2b37575e:/app# python3 -c "import json; print('VALID JSON' if json.load(open('/app/output/provenance_report.json')) else '')"
+[?2004lVALID JSON
+[?2004hroot@154a2b37575e:/app# 

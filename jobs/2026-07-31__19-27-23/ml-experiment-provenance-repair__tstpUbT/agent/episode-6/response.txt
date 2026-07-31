@@ -1,0 +1,10 @@
+```json
+{
+  "analysis": "Script written. Now make it executable and run it.",
+  "plan": "chmod +x and execute the script, then inspect the output JSON.",
+  "commands": [
+    {"keystrokes": "chmod +x /app/solution/solve.sh && /app/solution/solve.sh\n", "duration": 1.0},
+    {"keystrokes": "cat /app/output/provenance_report.json\n", "duration": 0.1}
+  ]
+}
+```

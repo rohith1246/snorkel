@@ -1,0 +1,62 @@
+{
+    "results": {
+        "tool": {
+            "name": "pytest",
+            "version": "8.4.1"
+        },
+        "summary": {
+            "tests": 4,
+            "passed": 2,
+            "failed": 2,
+            "skipped": 0,
+            "pending": 0,
+            "other": 0,
+            "start": 1785524238.42609,
+            "stop": 1785524238.4671612
+        },
+        "tests": [
+            {
+                "name": "test_outputs.py::test_output_file_exists",
+                "status": "passed",
+                "duration": 0.0006680650003545452,
+                "start": 1785524238.4467354,
+                "stop": 1785524238.4483976,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_binary_dag_crc32_corrupted_stage_filtered",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.000674596998578636,
+                "start": 1785524238.4486256,
+                "stop": 1785524238.4590182,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "def test_binary_dag_crc32_corrupted_stage_filtered():\n        \"\"\"Verify that model_eval, which has a corrupted IEEE 802.3 CRC32 checksum in dag_records.bin, is excluded from resolved stages.\"\"\"\n        data = load_output()\n        exec_order = data.get(\"execution_order\", [])\n        stage_ids = {s[\"stage_id\"] for s in exec_order}\n        assert \"model_eval\" not in stage_ids, \"Stage model_eval with invalid CRC32 checksum in dag_records.bin must be excluded.\"\n>       assert \"data_ingest\" in stage_ids, \"Valid stage data_ingest must be included in execution_order.\"\nE       AssertionError: Valid stage data_ingest must be included in execution_order.\nE       assert 'data_ingest' in {'data_ingest\\x00\\x00\\x00\\x00\\x00', 'feat_eng\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00', 'hyper_tune\\x00\\x00\\x00\\x00\\x00\\x00', 'model_train\\x00\\x00\\x00\\x00\\x00'}\n\n/tests/test_outputs.py:22: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_binary_cache_crc32_corrupted_stage_filtered",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.0006559709981956985,
+                "start": 1785524238.4592094,
+                "stop": 1785524238.4645393,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "def test_binary_cache_crc32_corrupted_stage_filtered():\n        \"\"\"Verify that model_train, which has a corrupted IEEE 802.3 CRC32 checksum in cache_index.bin, is marked as uncached.\"\"\"\n        data = load_output()\n        exec_order = data.get(\"execution_order\", [])\n        cached_stages = {s[\"stage_id\"] for s in exec_order if s.get(\"cached\") == True}\n        assert \"model_train\" not in cached_stages, \"Stage model_train with invalid cache CRC32 checksum must not be marked as cached.\"\n>       assert \"data_ingest\" in cached_stages, \"Stage data_ingest with valid cache CRC32 checksum must be marked as cached.\"\nE       AssertionError: Stage data_ingest with valid cache CRC32 checksum must be marked as cached.\nE       assert 'data_ingest' in {'data_ingest\\x00\\x00\\x00\\x00\\x00', 'feat_eng\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00'}\n\n/tests/test_outputs.py:30: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_summary_fields",
+                "status": "passed",
+                "duration": 0.00047537899990857113,
+                "start": 1785524238.464826,
+                "stop": 1785524238.4663076,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            }
+        ]
+    }
+}

@@ -1,0 +1,1 @@
+Resolved pipeline plan written to /app/output/resolved_pipeline.json

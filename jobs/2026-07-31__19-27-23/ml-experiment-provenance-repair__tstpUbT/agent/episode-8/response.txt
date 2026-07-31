@@ -1,0 +1,8 @@
+```json
+{
+  "analysis": "The solution is complete and verified. The output JSON is valid, correctly formatted with two-space indentation. It contains status=SUCCESS, a summary with total_records=5, valid_records=4, repaired_lineages=1, corrupted_records_excluded=1, and a provenance_tree with all 4 valid runs. run-exp-005 was correctly excluded (CRC failure), run-exp-003's broken parent was imputed to run-exp-002 via checkpoint lineage matching, and topological depths are correctly computed (0,1,2,3). The solve.sh script runs cleanly offline with no network calls.",
+  "plan": "Task is complete. All requirements have been satisfied.",
+  "commands": [],
+  "task_complete": true
+}
+```

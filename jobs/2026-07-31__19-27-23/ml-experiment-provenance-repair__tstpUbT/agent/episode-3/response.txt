@@ -1,0 +1,11 @@
+CRC validation works. run-exp-005 fails in lineage. Let me check the checkpoint file too.
+
+```json
+{
+  "analysis": "Lineage CRC works: 001-004 valid, 005 corrupted (CRC mismatch). Now check checkpoint dossier CRCs. Payload is 52 bytes (16 run_id + 18 input + 18 output), then 4-byte CRC, then 8 reserved.",
+  "plan": "Verify checkpoint CRCs.",
+  "commands": [
+    {"keystrokes": "python3 -c \"import zlib; d=open('/app/data/checkpoint_dossier.bin','rb').read()\nfor i in range(5):\n  rec=d[12+i*64:12+i*64+64]; p=rec[:52]; c=int.from_bytes(rec[52:56],'big'); rid=rec[:16].split(b'\\\\x00')[0]; inp=rec[16:34].split(b'\\\\x00')[0]; out=rec[34:52].split(b'\\\\x00')[0]; print(rid, inp, out, hex(c), hex(zlib.crc32(p)), c==zlib.crc32(p))\"\n", "duration": 0.5}
+  ]
+}
+```

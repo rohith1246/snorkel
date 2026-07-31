@@ -1,0 +1,84 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.12, pytest-8.4.1, pluggy-1.6.0
+cachedir: /tmp/pytest_cache
+rootdir: /tests
+plugins: json-ctrf-0.3.5
+collected 4 items
+
+../tests/test_outputs.py FFFF                                            [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_output_file_exists ____________________________
+
+    def test_output_file_exists():
+        """Verify that the required resolved pipeline JSON artifact file exists at /app/output/resolved_pipeline.json."""
+>       assert OUTPUT_FILE.exists(), "The output resolved pipeline file /app/output/resolved_pipeline.json does not exist."
+E       AssertionError: The output resolved pipeline file /app/output/resolved_pipeline.json does not exist.
+E       assert False
+E        +  where False = exists()
+E        +    where exists = PosixPath('/app/output/resolved_pipeline.json').exists
+
+/tests/test_outputs.py:14: AssertionError
+________________ test_binary_dag_crc32_corrupted_stage_filtered ________________
+
+    def test_binary_dag_crc32_corrupted_stage_filtered():
+        """Verify that model_eval, which has a corrupted IEEE 802.3 CRC32 checksum in dag_records.bin, is excluded from resolved stages."""
+>       data = load_output()
+               ^^^^^^^^^^^^^
+
+/tests/test_outputs.py:18: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def load_output():
+        """Load and parse the resolved pipeline manifest JSON output file from disk."""
+>       assert OUTPUT_FILE.exists(), f"Output file not found: {OUTPUT_FILE}"
+E       AssertionError: Output file not found: /app/output/resolved_pipeline.json
+E       assert False
+E        +  where False = exists()
+E        +    where exists = PosixPath('/app/output/resolved_pipeline.json').exists
+
+/tests/test_outputs.py:9: AssertionError
+_______________ test_binary_cache_crc32_corrupted_stage_filtered _______________
+
+    def test_binary_cache_crc32_corrupted_stage_filtered():
+        """Verify that model_train, which has a corrupted IEEE 802.3 CRC32 checksum in cache_index.bin, is marked as uncached."""
+>       data = load_output()
+               ^^^^^^^^^^^^^
+
+/tests/test_outputs.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def load_output():
+        """Load and parse the resolved pipeline manifest JSON output file from disk."""
+>       assert OUTPUT_FILE.exists(), f"Output file not found: {OUTPUT_FILE}"
+E       AssertionError: Output file not found: /app/output/resolved_pipeline.json
+E       assert False
+E        +  where False = exists()
+E        +    where exists = PosixPath('/app/output/resolved_pipeline.json').exists
+
+/tests/test_outputs.py:9: AssertionError
+_____________________________ test_summary_fields ______________________________
+
+    def test_summary_fields():
+        """Verify that summary metrics in resolved_pipeline.json accurately reflect total, resolved, and cached node counts."""
+>       data = load_output()
+               ^^^^^^^^^^^^^
+
+/tests/test_outputs.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def load_output():
+        """Load and parse the resolved pipeline manifest JSON output file from disk."""
+>       assert OUTPUT_FILE.exists(), f"Output file not found: {OUTPUT_FILE}"
+E       AssertionError: Output file not found: /app/output/resolved_pipeline.json
+E       assert False
+E        +  where False = exists()
+E        +    where exists = PosixPath('/app/output/resolved_pipeline.json').exists
+
+/tests/test_outputs.py:9: AssertionError
+=========================== short test summary info ============================
+FAILED ../tests/test_outputs.py::test_output_file_exists - AssertionError: Th...
+FAILED ../tests/test_outputs.py::test_binary_dag_crc32_corrupted_stage_filtered
+FAILED ../tests/test_outputs.py::test_binary_cache_crc32_corrupted_stage_filtered
+FAILED ../tests/test_outputs.py::test_summary_fields - AssertionError: Output...
+============================== 4 failed in 0.05s ===============================

@@ -1,0 +1,143 @@
+Previous response had warnings:
+WARNINGS: - Extra text detected before JSON object
+- Extra text detected after JSON object
+
+New Terminal Output:
+
+root@154a2b37575e:/app# cat > /app/solution/solve.sh <<'EOF'
+> #!/bin/bash
+> set -euo pipefail
+>
+> DATA_DIR="/app/data"
+> OUT_DIR="/app/output"
+> mkdir -p "$OUT_DIR"
+>
+> python3 - <<'PYEOF'
+> import zlib, json, struct
+>
+> DATA="/app/data"
+> OUT="/app/output/provenance_report.json"
+>
+> BROKEN_MARKERS = {"", "NULL", "0000000000000000"}
+> ROOT="ROOT"
+>
+> def cstr(b):
+>     return b.split(b"\x00")[0].decode("ascii", "replace")
+>
+> # ---- Parse lineage ledger ----
+> lg = open(f"{DATA}/lineage_graph.bin","rb").read()
+> assert lg[:5]==b"EXPRV", "bad lineage magic"
+> version, count = struct.unpack(">HH", lg[5:9])
+> REC=52
+> lineage=[]
+> corrupted=0
+> total=0
+> for i in range(count):
+>     off=12+i*REC
+>     rec=lg[off:off+REC]
+>     if len(rec)<REC: break
+>     total+=1
+>     payload=rec[:48]
+>     stored=int.from_bytes(rec[48:52],"big")
+>     if zlib.crc32(payload)!=stored:
+>         corrupted+=1
+>         continue
+>     run_id=cstr(payload[0:16])
+>     parent=cstr(payload[16:32])
+>     exp_hash=cstr(payload[32:40])
+>     status_code, ts = struct.unpack(">HI", payload[40:46])
+>     lineage.append({"run_id":run_id,"parent_run_id":parent,
+>                     "experiment_hash":exp_hash,"status_code":status_code,
+>                     "timestamp":ts})
+>
+> # ---- Parse checkpoint dossier ----
+> ck = open(f"{DATA}/checkpoint_dossier.bin","rb").read()
+> assert ck[:5]==b"CKPTR", "bad checkpoint magic"
+> cversion, ccount = struct.unpack(">HH", ck[5:9])
+> CREC=64
+> checkpoints={}
+> for i in range(ccount):
+>     off=12+i*CREC
+>     rec=ck[off:off+CREC]
+>     if len(rec)<CREC: break
+>     payload=rec[:52]
+>     stored=int.from_bytes(rec[52:56],"big")
+>     if zlib.crc32(payload)!=stored:
+>         continue
+>     run_id=cstr(payload[0:16])
+>     inp=cstr(payload[16:34])
+>     out=cstr(payload[34:52])
+>     checkpoints[run_id]={"input":inp,"output":out}
+>
+> # Only keep lineage runs that also have a valid checkpoint
+> valid_runs={r["run_id"] for r in lineage} & set(checkpoints.keys())
+> lineage=[r for r in lineage if r["run_id"] in valid_runs]
+>
+> # Build output_checkpoint -> run_id map
+> out_map={}
+> for rid in valid_runs:
+>     out_c=checkpoints[rid]["output"]
+>     if out_c:
+>         out_map[out_c]=rid
+>
+> # ---- Impute broken parents ----
+> repaired=0
+> for r in lineage:
+>     rid=r["run_id"]
+>     parent=r["parent_run_id"]
+>     if parent in BROKEN_MARKERS:
+>         inp=checkpoints[rid]["input"]
+>         if inp and inp in out_map:
+>             r["parent_run_id"]=out_map[inp]
+>             repaired+=1
+>         else:
+>             r["parent_run_id"]=ROOT
+>
+> # ---- Topological depth ----
+> by_id={r["run_id"]:r for r in lineage}
+> depth_cache={}
+> def depth(rid, seen=None):
+>     if seen is None: seen=set()
+>     if rid in depth_cache: return depth_cache[rid]
+>     if rid in seen: return 0
+>     seen.add(rid)
+>     r=by_id.get(rid)
+>     if r is None: return 0
+>     p=r["parent_run_id"]
+>     if p==ROOT or p in BROKEN_MARKERS or p not in by_id:
+>         d=0
+>     else:
+>         d=depth(p, seen)+1
+>     depth_cache[rid]=d
+>     return d
+>
+> tree=[]
+> for r in sorted(lineage, key=lambda x:x["run_id"]):
+>     rid=r["run_id"]
+>     d=depth(rid)
+>     tree.append({
+>         "run_id":rid,
+>         "parent_run_id":r["parent_run_id"],
+>         "depth":d,
+>         "checkpoint_hash":checkpoints[rid]["output"],
+>         "status":"VALID"
+>     })
+>
+> report={
+>     "status":"SUCCESS",
+>     "summary":{
+>         "total_records":total,
+>         "valid_records":len(lineage),
+>         "repaired_lineages":repaired,
+>         "corrupted_records_excluded":corrupted
+>     },
+>     "provenance_tree":tree
+> }
+>
+> with open(OUT,"w") as f:
+>     json.dump(report,f,indent=2)
+>     f.write("\n")
+> print("Wrote", OUT)
+> PYEOF
+> EOF
+root@154a2b37575e:/app#

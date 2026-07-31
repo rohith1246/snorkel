@@ -1,0 +1,16 @@
+Previous response had warnings:
+WARNINGS: - Extra text detected before JSON object
+- Extra text detected after JSON object
+
+New Terminal Output:
+
+root@154a2b37575e:/app# python3 -c "import zlib; d=open('/app/data/checkpoint_dossier.bin','rb').read()
+> for i in range(5):
+>   rec=d[12+i*64:12+i*64+64]; p=rec[:52]; c=int.from_bytes(rec[52:56],'big'); rid=rec[:16].split(b'\\x00')[0]; inp=rec[16:34].split(b'\\x00')[0]; out=rec[34:52
+].split(b'\\x00')[0]; print(rid, inp, out, hex(c), hex(zlib.crc32(p)), c==zlib.crc32(p))"
+b'run-exp-001' b'' b'ckpt-sha256-001a' 0xf8f9f758 0xf8f9f758 True
+b'run-exp-002' b'ckpt-sha256-001a' b'ckpt-sha256-002b' 0x1a103bf5 0x1a103bf5 True
+b'run-exp-003' b'ckpt-sha256-002b' b'ckpt-sha256-003c' 0x40319dea 0x40319dea True
+b'run-exp-004' b'ckpt-sha256-003c' b'ckpt-sha256-004d' 0x8115c680 0x8115c680 True
+b'run-exp-005' b'ckpt-sha256-004d' b'ckpt-sha256-005e' 0x5f924d9a 0x956cf724 False
+root@154a2b37575e:/app#

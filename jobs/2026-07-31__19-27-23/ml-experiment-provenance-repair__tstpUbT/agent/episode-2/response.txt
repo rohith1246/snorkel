@@ -1,0 +1,11 @@
+Now I understand the structure. Let me verify CRC values with Python to confirm which records are corrupted.
+
+```json
+{
+  "analysis": "I can see both files. Lineage has 5 records: run-exp-001 (parent empty=ROOT), 002 (parent 001), 003 (parent empty=broken), 004 (parent 003), 005 (parent 004). Checkpoints link runs via input/output checkpoint hashes. run-exp-005 is stated corrupted. I need to verify CRC32 to determine which pass. Let me test CRC computation in python.",
+  "plan": "Write a quick python test to compute CRC32 over payloads and compare to stored checksums to confirm corrupted records.",
+  "commands": [
+    {"keystrokes": "python3 -c \"import zlib; d=open('/app/data/lineage_graph.bin','rb').read()\nfor i in range(5):\n  rec=d[12+i*52:12+i*52+52]; p=rec[:48]; c=int.from_bytes(rec[48:52],'big'); print(i, p[:16].split(b'\\\\x00')[0], hex(c), hex(zlib.crc32(p)), c==zlib.crc32(p))\"\n", "duration": 0.5}
+  ]
+}
+```

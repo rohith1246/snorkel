@@ -1,0 +1,43 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.12, pytest-8.4.1, pluggy-1.6.0
+cachedir: /tmp/pytest_cache
+rootdir: /tests
+plugins: json-ctrf-0.3.5
+collected 4 items
+
+../tests/test_outputs.py .FF.                                            [100%]
+
+=================================== FAILURES ===================================
+________________ test_binary_dag_crc32_corrupted_stage_filtered ________________
+
+    def test_binary_dag_crc32_corrupted_stage_filtered():
+        """Verify that model_eval, which has a corrupted IEEE 802.3 CRC32 checksum in dag_records.bin, is excluded from resolved stages."""
+        data = load_output()
+        exec_order = data.get("execution_order", [])
+        stage_ids = {s["stage_id"] for s in exec_order}
+        assert "model_eval" not in stage_ids, "Stage model_eval with invalid CRC32 checksum in dag_records.bin must be excluded."
+>       assert "data_ingest" in stage_ids, "Valid stage data_ingest must be included in execution_order."
+E       AssertionError: Valid stage data_ingest must be included in execution_order.
+E       assert 'data_ingest' in {'data_ingest\x00\x00\x00\x00\x00', 'feat_eng\x00\x00\x00\x00\x00\x00\x00\x00', 'hyper_tune\x00\x00\x00\x00\x00\x00', 'model_train\x00\x00\x00\x00\x00'}
+
+/tests/test_outputs.py:22: AssertionError
+_______________ test_binary_cache_crc32_corrupted_stage_filtered _______________
+
+    def test_binary_cache_crc32_corrupted_stage_filtered():
+        """Verify that model_train, which has a corrupted IEEE 802.3 CRC32 checksum in cache_index.bin, is marked as uncached."""
+        data = load_output()
+        exec_order = data.get("execution_order", [])
+        cached_stages = {s["stage_id"] for s in exec_order if s.get("cached") == True}
+        assert "model_train" not in cached_stages, "Stage model_train with invalid cache CRC32 checksum must not be marked as cached."
+>       assert "data_ingest" in cached_stages, "Stage data_ingest with valid cache CRC32 checksum must be marked as cached."
+E       AssertionError: Stage data_ingest with valid cache CRC32 checksum must be marked as cached.
+E       assert 'data_ingest' in {'data_ingest\x00\x00\x00\x00\x00', 'feat_eng\x00\x00\x00\x00\x00\x00\x00\x00'}
+
+/tests/test_outputs.py:30: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED ../tests/test_outputs.py::test_output_file_exists
+PASSED ../tests/test_outputs.py::test_summary_fields
+FAILED ../tests/test_outputs.py::test_binary_dag_crc32_corrupted_stage_filtered
+FAILED ../tests/test_outputs.py::test_binary_cache_crc32_corrupted_stage_filtered
+========================= 2 failed, 2 passed in 0.05s ==========================

@@ -1,0 +1,11 @@
+Everything is clear now. Let me write the solution script.
+
+```json
+{
+  "analysis": "All CRCs verified. Checkpoints: 001-004 valid, 005 corrupted. run-exp-003 has empty parent in lineage (broken), needs imputation: its input_checkpoint is ckpt-sha256-002b which matches run-exp-002's output_checkpoint, so parent=run-exp-002. run-exp-001 has empty parent = ROOT (root node). Now I'll write the full solve.sh with embedded python.",
+  "plan": "Create /app/solution/solve.sh that: reads both binaries, validates CRC32, filters corrupted, imputes broken parents via checkpoint matching, computes topological depth, and writes JSON report to /app/output/provenance_report.json.",
+  "commands": [
+    {"keystrokes": "mkdir -p /app/solution /app/output\n", "duration": 0.1}
+  ]
+}
+```
