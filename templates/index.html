@@ -187,14 +187,19 @@
                     <span class="author-tag-lg"><i class="fa-solid fa-crown"></i> Curated by <strong>Rohith Vuppula</strong></span>
                 </div>
 
-                <!-- Controls Bar: Search & Category Filters -->
+                <!-- Controls Bar: Search, Category Filters, Claim Toggle -->
                 <div class="ideas-controls-bar">
-                    <div class="search-box">
-                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                        <input type="text" id="taskSearchInput" placeholder="Search 100 task ideas by name, mechanism, or category...">
+                    <div class="search-and-toggle-row">
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="taskSearchInput" placeholder="Search 100 task ideas by name, mechanism, or category...">
+                        </div>
+                        <button class="btn btn-outline" id="toggleShowClaimedBtn">
+                            <i class="fa-solid fa-eye-slash"></i> Hide Claimed (Active Only)
+                        </button>
                     </div>
                     <div class="category-filters" id="categoryFilters">
-                        <button class="cat-filter-btn active" data-cat="all">All (100)</button>
+                        <button class="cat-filter-btn active" data-cat="all">All Categories</button>
                         <button class="cat-filter-btn" data-cat="system-administration">System Admin</button>
                         <button class="cat-filter-btn" data-cat="machine-learning">Machine Learning</button>
                         <button class="cat-filter-btn" data-cat="games">Games</button>
@@ -233,6 +238,31 @@
                 <span class="dot-separator">•</span> Powered by Groq AI & STB Harbor Verifier Rules
             </p>
         </footer>
+    </div>
+
+    <!-- Claim Task Modal -->
+    <div class="modal-overlay" id="claimModal">
+        <div class="modal white-card">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-hand-holding-hand icon-blue"></i> Claim Task Specification</h2>
+                <button class="close-btn" id="closeClaimBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-subtitle">Claiming this task will hide it from the active task ideas list so your friends know you are building it!</p>
+                <div class="form-group" style="margin-top: 14px;">
+                    <label style="display:block; font-weight:700; font-size:0.85rem; margin-bottom:6px;">Target Task:</label>
+                    <code id="claimTaskNameCode" style="font-size:1rem; background:#f1f5f9; padding:6px 12px; border-radius:6px; color:#2563eb; font-weight:700;">task-name</code>
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                    <label style="display:block; font-weight:700; font-size:0.85rem; margin-bottom:6px;">Your Name / Friend's Name:</label>
+                    <input type="text" id="claimantNameInput" placeholder="e.g. Rohith / Alex / Friend Name..." style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; outline:none;">
+                </div>
+                <div class="modal-actions" style="margin-top: 20px; display:flex; justify-end:flex-end; gap:10px;">
+                    <button class="btn btn-outline" id="cancelClaimBtn">Cancel</button>
+                    <button class="btn btn-primary" id="confirmClaimBtn"><i class="fa-solid fa-check"></i> Claim Task Now</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- History Drawer Modal -->

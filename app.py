@@ -88,22 +88,40 @@ def get_task_ideas():
     per_page = int(request.args.get('per_page', 5))
     category = request.args.get('category', 'all').strip().lower()
     search = request.args.get('search', '').strip().lower()
+    show_claimed = request.args.get('show_claimed', 'false').lower() == 'true'
 
-    filtered = ALL_TASK_IDEAS
+    claimed_map = db.get_claimed_tasks_dict()
+
+    enriched_ideas = []
+    for task in ALL_TASK_IDEAS:
+        t_copy = dict(task)
+        if t_copy["name"] in claimed_map:
+            t_copy["is_claimed"] = True
+            t_copy["claimed_by"] = claimed_map[t_copy["name"]]["claimed_by"]
+            t_copy["claimed_at"] = claimed_map[t_copy["name"]]["claimed_at"]
+        else:
+            t_copy["is_claimed"] = False
+            t_copy["claimed_by"] = None
+            t_copy["claimed_at"] = None
+        enriched_ideas.append(t_copy)
+
+    # Exclude/Hide claimed tasks unless show_claimed is True
+    if not show_claimed:
+        enriched_ideas = [t for t in enriched_ideas if not t["is_claimed"]]
 
     if category != 'all':
-        filtered = [t for t in filtered if t['category'].lower() == category]
+        enriched_ideas = [t for t in enriched_ideas if t['category'].lower() == category]
 
     if search:
-        filtered = [t for t in filtered if search in t['name'].lower() or search in t['problem_statement'].lower() or search in t['hardening_mechanism'].lower()]
+        enriched_ideas = [t for t in enriched_ideas if search in t['name'].lower() or search in t['problem_statement'].lower() or search in t['hardening_mechanism'].lower()]
 
-    total_tasks = len(filtered)
+    total_tasks = len(enriched_ideas)
     total_pages = (total_tasks + per_page - 1) // per_page if total_tasks > 0 else 1
     page = max(1, min(page, total_pages))
 
     start_idx = (page - 1) * per_page
     end_idx = start_idx + per_page
-    paginated_tasks = filtered[start_idx:end_idx]
+    paginated_tasks = enriched_ideas[start_idx:end_idx]
 
     return jsonify({
         "status": "SUCCESS",
@@ -111,8 +129,41 @@ def get_task_ideas():
         "total_pages": total_pages,
         "current_page": page,
         "per_page": per_page,
+        "show_claimed": show_claimed,
         "built_by": "Rohith Vuppula",
         "tasks": paginated_tasks
+    })
+
+@app.route('/api/claim-task', methods=['POST'])
+def claim_task():
+    data = request.get_json() or {}
+    task_name = data.get("task_name", "").strip()
+    claimed_by = data.get("claimed_by", "Friend").strip() or "Friend"
+
+    if not task_name:
+        return jsonify({"status": "ERROR", "message": "Missing task_name parameter."}), 400
+
+    db.claim_task(task_name, claimed_by)
+    return jsonify({
+        "status": "SUCCESS",
+        "message": f"Task '{task_name}' successfully claimed by {claimed_by}! It is now hidden from available task list.",
+        "task_name": task_name,
+        "claimed_by": claimed_by
+    })
+
+@app.route('/api/unclaim-task', methods=['POST'])
+def unclaim_task():
+    data = request.get_json() or {}
+    task_name = data.get("task_name", "").strip()
+
+    if not task_name:
+        return jsonify({"status": "ERROR", "message": "Missing task_name parameter."}), 400
+
+    db.unclaim_task(task_name)
+    return jsonify({
+        "status": "SUCCESS",
+        "message": f"Task '{task_name}' has been unclaimed and restored to available task pool.",
+        "task_name": task_name
     })
 
 if __name__ == '__main__':

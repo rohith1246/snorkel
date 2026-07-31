@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function handleFileSelect(file) {
-        if (!file.name.endsWith('.zip')) {
+        if (!file.name.endswith || !file.name.endsWith('.zip')) {
             alert('Please select a valid .zip archive.');
             return;
         }
@@ -165,10 +165,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- 100 TASK IDEAS CATALOGUE LOGIC (5 PER PAGE) ---
+    // --- 100 TASK IDEAS CATALOGUE LOGIC (WITH CLAIM SYSTEM) ---
     let currentPage = 1;
     let currentCategory = 'all';
     let currentSearch = '';
+    let showClaimed = false; // Default: Hides claimed tasks!
 
     const ideasListContainer = document.getElementById('ideasListContainer');
     const prevPageBtn = document.getElementById('prevPageBtn');
@@ -176,13 +177,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageNumBadge = document.getElementById('pageNumBadge');
     const paginationInfo = document.getElementById('paginationInfo');
     const taskSearchInput = document.getElementById('taskSearchInput');
+    const toggleShowClaimedBtn = document.getElementById('toggleShowClaimedBtn');
+
+    // Claim Modal Elements
+    const claimModal = document.getElementById('claimModal');
+    const closeClaimBtn = document.getElementById('closeClaimBtn');
+    const cancelClaimBtn = document.getElementById('cancelClaimBtn');
+    const confirmClaimBtn = document.getElementById('confirmClaimBtn');
+    const claimTaskNameCode = document.getElementById('claimTaskNameCode');
+    const claimantNameInput = document.getElementById('claimantNameInput');
+    let taskToClaim = null;
+
+    toggleShowClaimedBtn.addEventListener('click', () => {
+        showClaimed = !showClaimed;
+        if (showClaimed) {
+            toggleShowClaimedBtn.innerHTML = '<i class="fa-solid fa-eye"></i> Showing All (Including Claimed)';
+            toggleShowClaimedBtn.classList.remove('btn-outline');
+            toggleShowClaimedBtn.classList.add('btn-primary');
+        } else {
+            toggleShowClaimedBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Hide Claimed (Active Only)';
+            toggleShowClaimedBtn.classList.remove('btn-primary');
+            toggleShowClaimedBtn.classList.add('btn-outline');
+        }
+        loadTaskIdeas(1);
+    });
 
     async function loadTaskIdeas(page = 1) {
         currentPage = page;
-        ideasListContainer.innerHTML = '<p class="placeholder-text">Loading 5 task ideas for page ' + page + '...</p>';
+        ideasListContainer.innerHTML = '<p class="placeholder-text">Loading task ideas for page ' + page + '...</p>';
 
         try {
-            const url = `/api/task-ideas?page=${page}&per_page=5&category=${encodeURIComponent(currentCategory)}&search=${encodeURIComponent(currentSearch)}`;
+            const url = `/api/task-ideas?page=${page}&per_page=5&category=${encodeURIComponent(currentCategory)}&search=${encodeURIComponent(currentSearch)}&show_claimed=${showClaimed}`;
             const resp = await fetch(url);
             const data = await resp.json();
 
@@ -198,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ideasListContainer.innerHTML = '';
 
         if (data.tasks.length === 0) {
-            ideasListContainer.innerHTML = '<p class="placeholder-text">No matching task ideas found.</p>';
+            ideasListContainer.innerHTML = '<p class="placeholder-text">No available task ideas found matching criteria.</p>';
             paginationInfo.innerHTML = 'Showing Tasks <strong>0</strong> of <strong>0</strong>';
             pageNumBadge.textContent = 'Page 0 of 0';
             prevPageBtn.disabled = true;
@@ -208,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         data.tasks.forEach(task => {
             const card = document.createElement('div');
-            card.className = 'card white-card task-idea-card';
+            card.className = `card white-card task-idea-card ${task.is_claimed ? 'claimed' : ''}`;
             card.innerHTML = `
                 <div class="task-idea-header">
                     <div class="task-idea-title">
@@ -217,6 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="task-idea-meta">
                         <span class="badge badge-primary">${task.category}</span>
                         <span class="badge badge-neutral">Difficulty: ${task.difficulty}</span>
+                        ${task.is_claimed ? `<span class="badge badge-danger"><i class="fa-solid fa-user-lock"></i> Claimed by ${task.claimed_by}</span>` : ''}
                     </div>
                 </div>
                 <div class="task-idea-body">
@@ -231,22 +257,78 @@ document.addEventListener('DOMContentLoaded', () => {
                         <i class="fa-solid fa-file-code icon-blue"></i> Output: <code>${task.output_artifact}</code>
                     </div>
                     <div class="score-targets">
-                        <span class="target-badge target-oracle">Oracle Target: ${task.oracle_score}</span>
-                        <span class="target-badge target-llm">LLM Target: ${task.llm_score}</span>
+                        <span class="target-badge target-oracle">Oracle: ${task.oracle_score}</span>
+                        <span class="target-badge target-llm">LLM: ${task.llm_score}</span>
+                        ${task.is_claimed ? 
+                            `<button class="btn-unclaim" data-name="${task.name}"><i class="fa-solid fa-undo"></i> Unclaim</button>` : 
+                            `<button class="btn-claim" data-name="${task.name}"><i class="fa-solid fa-hand-pointer"></i> Claim Task</button>`
+                        }
                     </div>
                 </div>
             `;
             ideasListContainer.appendChild(card);
         });
 
+        // Add Claim button click handlers
+        document.querySelectorAll('.btn-claim').forEach(b => {
+            b.addEventListener('click', (e) => {
+                taskToClaim = e.target.closest('button').dataset.name;
+                claimTaskNameCode.textContent = taskToClaim;
+                claimantNameInput.value = '';
+                claimModal.classList.add('active');
+            });
+        });
+
+        // Add Unclaim button click handlers
+        document.querySelectorAll('.btn-unclaim').forEach(b => {
+            b.addEventListener('click', async (e) => {
+                const tName = e.target.closest('button').dataset.name;
+                if (confirm(`Unclaim task '${tName}' and restore it to available tasks?`)) {
+                    await fetch('/api/unclaim-task', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ task_name: tName })
+                    });
+                    loadTaskIdeas(currentPage);
+                }
+            });
+        });
+
         const startItem = (data.current_page - 1) * data.per_page + 1;
         const endItem = Math.min(data.current_page * data.per_page, data.total_tasks);
-        paginationInfo.innerHTML = `Showing Tasks <strong>${startItem} - ${endItem}</strong> of <strong>${data.total_tasks}</strong> (5 per page)`;
+        paginationInfo.innerHTML = `Showing Active Tasks <strong>${startItem} - ${endItem}</strong> of <strong>${data.total_tasks}</strong> (5 per page)`;
         pageNumBadge.textContent = `Page ${data.current_page} of ${data.total_pages}`;
 
         prevPageBtn.disabled = data.current_page <= 1;
         nextPageBtn.disabled = data.current_page >= data.total_pages;
     }
+
+    closeClaimBtn.addEventListener('click', () => claimModal.classList.remove('active'));
+    cancelClaimBtn.addEventListener('click', () => claimModal.classList.remove('active'));
+
+    confirmClaimBtn.addEventListener('click', async () => {
+        if (!taskToClaim) return;
+        const friendName = claimantNameInput.value.trim() || 'Friend';
+
+        try {
+            const resp = await fetch('/api/claim-task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_name: taskToClaim, claimed_by: friendName })
+            });
+            const result = await resp.json();
+            claimModal.classList.remove('active');
+
+            if (result.status === 'SUCCESS') {
+                alert(result.message);
+                loadTaskIdeas(currentPage);
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (err) {
+            alert('Failed to claim task: ' + err.message);
+        }
+    });
 
     prevPageBtn.addEventListener('click', () => {
         if (currentPage > 1) loadTaskIdeas(currentPage - 1);
