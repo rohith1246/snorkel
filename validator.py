@@ -11,6 +11,7 @@ except ImportError:
 
 CANONICAL_BASE_IMAGES = [
     "public.ecr.aws/docker/library/python:3.13-slim-bookworm",
+    "public.ecr.aws/docker/library/python:3.11-slim-bookworm",
     "public.ecr.aws/docker/library/node:22-bookworm-slim",
     "public.ecr.aws/docker/library/golang:1.24-bookworm",
     "public.ecr.aws/docker/library/rust:1.85-slim",
@@ -118,7 +119,7 @@ class SnorkelTaskValidator:
             # 4. Audit Dockerfile & Environment
             self._audit_dockerfile()
 
-            # 5. Audit Solution & Tests (including docstring checks)
+            # 5. Audit Solution & Tests (including CTRF plugin installation check)
             self._audit_solution_and_tests(is_milestone, number_of_milestones)
 
             # Final Score Normalization
@@ -391,6 +392,12 @@ class SnorkelTaskValidator:
                            "Missing tests/requirements.txt.",
                            suggestion="Store test dependencies (pytest, pytest-json-ctrf) in tests/requirements.txt.")
 
+        dockerfile_path = os.path.join(self.task_root, "environment", "Dockerfile")
+        dockerfile_content = ""
+        if os.path.exists(dockerfile_path):
+            with open(dockerfile_path, "r", encoding="utf-8", errors="ignore") as f:
+                dockerfile_content = f.read()
+
         test_sh_path = os.path.join(self.task_root, "tests", "test.sh")
         if os.path.exists(test_sh_path):
             with open(test_sh_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -405,6 +412,19 @@ class SnorkelTaskValidator:
                 )
             else:
                 self.add_check("TEST_SH_OFFLINE", "Offline Test Execution Policy", "Testing", "PASS", "tests/test.sh executes offline without runtime package installation.")
+
+            if "--ctrf" in t_content:
+                # Check if pytest-json-ctrf is installed in Dockerfile or tests/requirements.txt
+                has_ctrf_installed = "pytest-json-ctrf" in dockerfile_content or (os.path.exists(test_req_path) and "pytest-json-ctrf" in open(test_req_path).read())
+                if not has_ctrf_installed:
+                    self.add_check(
+                        "TEST_CTRF_INSTALLED", "pytest-json-ctrf Package Installation", "Testing", "FAIL",
+                        "tests/test.sh uses --ctrf flag but pytest-json-ctrf is missing from environment/Dockerfile.",
+                        details="Using --ctrf without pytest-json-ctrf causes pytest to fail with 'unrecognized arguments: --ctrf' resulting in 0.000 reward.",
+                        suggestion="Add `pytest-json-ctrf==0.3.5` to pip install command in environment/Dockerfile."
+                    )
+                else:
+                    self.add_check("TEST_CTRF_INSTALLED", "pytest-json-ctrf Package Installation", "Testing", "PASS", "pytest-json-ctrf package is pre-baked in environment/Dockerfile.")
 
             if "--ctrf" in t_content and "/logs/verifier/reward.txt" in t_content:
                 self.add_check("TEST_SH_CTRF", "Verifier CTRF Reporting & Reward Output", "Testing", "PASS", "test.sh generates CTRF JSON log and writes /logs/verifier/reward.txt.")
@@ -422,7 +442,6 @@ class SnorkelTaskValidator:
             test_funcs = re.findall(r'def (test_\w+)\s*\(', py_content)
             missing_docstrings = []
             for func in test_funcs:
-                # Find the function body and check if docstring exists directly under it
                 func_match = re.search(r'def ' + func + r'\s*\([^)]*\):(?:\s*\n)+([ \t]*["\']{3})', py_content)
                 if not func_match:
                     missing_docstrings.append(func)
