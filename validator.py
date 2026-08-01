@@ -401,11 +401,13 @@ class SnorkelTaskValidator:
     def _audit_solution_and_tests(self, is_milestone, number_of_milestones):
         test_req_path = os.path.join(self.task_root, "tests", "requirements.txt")
         if os.path.exists(test_req_path):
-            self.add_check("TEST_DEPS_SEPARATION", "Test-Only Dependencies Separation", "Testing", "PASS", "Separate tests/requirements.txt present for verifier dependencies.")
+            self.add_check("TEST_DEPS_SEPARATION", "Prohibited Test Requirements File", "Testing", "FAIL",
+                           "Prohibited file tests/requirements.txt is present inside tests/ directory.",
+                           details="Infobay / Snorkel reviewer guidelines strictly prohibit placing requirements.txt inside tests/.",
+                           suggestion="Remove tests/requirements.txt and pre-install test dependencies in environment/Dockerfile or tests/test.sh.")
         else:
-            self.add_check("TEST_DEPS_SEPARATION", "Test-Only Dependencies Separation", "Testing", "WARN",
-                           "Missing tests/requirements.txt.",
-                           suggestion="Store test dependencies (pytest, pytest-json-ctrf) in tests/requirements.txt.")
+            self.add_check("TEST_DEPS_SEPARATION", "Docker Test Dependencies Pre-Bake Compliance", "Testing", "PASS",
+                           "No prohibited tests/requirements.txt present; test dependencies pre-baked in Docker environment.")
 
         dockerfile_path = os.path.join(self.task_root, "environment", "Dockerfile")
         dockerfile_content = ""
