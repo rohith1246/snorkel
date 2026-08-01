@@ -143,10 +143,13 @@ def claim_task():
     if not task_name:
         return jsonify({"status": "ERROR", "message": "Missing task_name parameter."}), 400
 
-    db.claim_task(task_name, claimed_by)
+    success, msg = db.claim_task(task_name, claimed_by)
+    if not success:
+        return jsonify({"status": "ERROR", "message": msg}), 400
+
     return jsonify({
         "status": "SUCCESS",
-        "message": f"Task '{task_name}' successfully claimed by {claimed_by}! It is now hidden from available task list.",
+        "message": msg,
         "task_name": task_name,
         "claimed_by": claimed_by
     })

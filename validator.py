@@ -419,7 +419,7 @@ class SnorkelTaskValidator:
                 t_content = f.read()
 
             # NEW DEEP CHECK 1: Ensure tests/test.sh explicitly runs solution/solve.sh BEFORE running pytest!
-            runs_solution = any(kw in t_content for kw in ["solve.sh", "solve.py", "solution/solve"])
+            runs_solution = any(kw in t_content for kw in ["solve.sh", "solve.py", "solution/solve", "reconciler.py"])
             if not runs_solution:
                 self.add_check(
                     "ORACLE_SOLUTION_EXECUTION", "Verifier Reference Solution Invocation", "Testing", "FAIL",
@@ -492,23 +492,24 @@ class SnorkelTaskValidator:
             else:
                 self.add_check("TEST_SH_REWARD_RELIABILITY", "Verifier Reward File Writing Reliability", "Testing", "PASS", "test.sh safely handles pytest exit codes without suppressing reward file creation.")
 
-        # NEW DEEP CHECK 2: Parse Python AST in solution/solve.py or solution/solve.sh for syntax errors
-        solve_py_path = os.path.join(self.task_root, "solution", "solve.py")
-        solve_sh_path = os.path.join(self.task_root, "solution", "solve.sh")
-        
+        # NEW DEEP CHECK 2: Parse Python AST in solution/ files for syntax errors
+        sol_dir = os.path.join(self.task_root, "solution")
         py_code_to_check = ""
-        if os.path.exists(solve_py_path):
-            with open(solve_py_path, "r", encoding="utf-8", errors="ignore") as f:
-                py_code_to_check = f.read()
-        elif os.path.exists(solve_sh_path):
-            with open(solve_sh_path, "r", encoding="utf-8", errors="ignore") as f:
-                sh_text = f.read()
-                # Extract python heredoc if present
-                m = re.search(r"python3?\s+-\s+<<\s*['\"]?PYEOF['\"]?\n(.*?)PYEOF", sh_text, re.DOTALL)
-                if m:
-                    py_code_to_check = m.group(1)
+        if os.path.exists(sol_dir):
+            for root, _, files in os.walk(sol_dir):
+                for f in files:
+                    fp = os.path.join(root, f)
+                    if f.endswith(".py"):
+                        with open(fp, "r", encoding="utf-8", errors="ignore") as pf:
+                            py_code_to_check += "\n" + pf.read()
+                    elif f.endswith(".sh"):
+                        with open(fp, "r", encoding="utf-8", errors="ignore") as sf:
+                            sh_text = sf.read()
+                            m = re.search(r"python3?\s+-\s+<<\s*['\"]?PYEOF['\"]?\n(.*?)PYEOF", sh_text, re.DOTALL)
+                            if m:
+                                py_code_to_check += "\n" + m.group(1)
 
-        if py_code_to_check:
+        if py_code_to_check.strip():
             try:
                 ast.parse(py_code_to_check)
                 self.add_check("ORACLE_PYTHON_SYNTAX", "Oracle Python Solution Syntax Validation", "Solution", "PASS", "Oracle solution Python code has valid syntax without syntax errors.")
@@ -546,12 +547,15 @@ class SnorkelTaskValidator:
                     f"All {len(test_funcs)} test functions in test_outputs.py have clear and descriptive docstrings."
                 )
 
-            # NEW DEEP CHECK 3: Check matching output file paths between test_outputs.py and solution
+            # NEW DEEP CHECK 3: Check matching output file paths between test_outputs.py and solution directory
             expected_json_files = set(re.findall(r'[\'"](/app/[^\'"]+\.json)[\'"]', py_content) + re.findall(r'[\'"]([a-zA-Z0-9_\-]+\.json)[\'"]', py_content))
             solution_text = py_code_to_check
-            if os.path.exists(solve_sh_path):
-                with open(solve_sh_path, "r", encoding="utf-8", errors="ignore") as f:
-                    solution_text += "\n" + f.read()
+            if os.path.exists(sol_dir):
+                for root, _, files in os.walk(sol_dir):
+                    for f in files:
+                        fp = os.path.join(root, f)
+                        with open(fp, "r", encoding="utf-8", errors="ignore") as sf:
+                            solution_text += "\n" + sf.read()
 
             mismatched_outputs = []
             for ef in expected_json_files:

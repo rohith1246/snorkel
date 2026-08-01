@@ -139,18 +139,26 @@ class TaskAuditDB:
         cursor = conn.cursor()
         try:
             if self.use_sqlite:
+                cursor.execute("SELECT claimed_by FROM claimed_tasks WHERE task_name = ?", (task_name,))
+            else:
+                cursor.execute("SELECT claimed_by FROM claimed_tasks WHERE task_name = %s", (task_name,))
+            
+            existing = cursor.fetchone()
+            if existing:
+                return False, f"Task '{task_name}' is already claimed by {existing[0]}! Another user cannot claim it."
+
+            if self.use_sqlite:
                 cursor.execute("""
-                    INSERT OR REPLACE INTO claimed_tasks (task_name, claimed_by)
+                    INSERT INTO claimed_tasks (task_name, claimed_by)
                     VALUES (?, ?)
                 """, (task_name, claimed_by))
             else:
                 cursor.execute("""
                     INSERT INTO claimed_tasks (task_name, claimed_by)
                     VALUES (%s, %s)
-                    ON CONFLICT (task_name) DO UPDATE SET claimed_by = EXCLUDED.claimed_by, claimed_at = CURRENT_TIMESTAMP
                 """, (task_name, claimed_by))
             conn.commit()
-            return True
+            return True, f"Task '{task_name}' successfully claimed by {claimed_by}! It is now hidden from the available task list."
         finally:
             conn.close()
 
