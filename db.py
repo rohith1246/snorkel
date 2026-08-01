@@ -3,9 +3,34 @@ import sqlite3
 import json
 import psycopg2
 
+def load_neon_url():
+    url = os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL")
+    if url:
+        return url
+    
+    # Check .env file
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("NEON_DATABASE_URL=") or line.strip().startswith("DATABASE_URL="):
+                    return line.strip().split("=", 1)[1].strip().strip('"').strip("'")
+    
+    # Check neon_config.json
+    cfg_path = os.path.join(os.path.dirname(__file__), "neon_config.json")
+    if os.path.exists(cfg_path):
+        try:
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data.get("NEON_DATABASE_URL") or data.get("DATABASE_URL")
+        except Exception:
+            pass
+    return None
+
+
 class TaskAuditDB:
     def __init__(self):
-        self.db_url = os.environ.get("NEON_DATABASE_URL") or os.environ.get("DATABASE_URL")
+        self.db_url = load_neon_url()
         self.use_sqlite = True
         self.sqlite_file = "audit_history.db"
 

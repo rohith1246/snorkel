@@ -169,6 +169,33 @@ def unclaim_task():
         "task_name": task_name
     })
 
+@app.route('/api/configure-neon-db', methods=['POST'])
+def configure_neon_db():
+    data = request.get_json() or {}
+    neon_url = data.get("neon_url", "").strip()
+    
+    if not neon_url:
+        return jsonify({"status": "ERROR", "message": "Missing neon_url parameter."}), 400
+
+    cfg_path = os.path.join(os.path.dirname(__file__), "neon_config.json")
+    try:
+        with open(cfg_path, "w", encoding="utf-8") as f:
+            json.dump({"NEON_DATABASE_URL": neon_url}, f, indent=2)
+        
+        # Re-initialize DB connection
+        global db
+        db = TaskAuditDB()
+        
+        db_type = "Neon PostgreSQL Database" if not db.use_sqlite else "SQLite (Fallback)"
+        return jsonify({
+            "status": "SUCCESS",
+            "message": f"Successfully configured Neon Database URL! Current Storage: {db_type}.",
+            "db_type": db_type,
+            "use_sqlite": db.use_sqlite
+        })
+    except Exception as e:
+        return jsonify({"status": "ERROR", "message": f"Failed to save Neon DB config: {str(e)}"}), 500
+
 if __name__ == '__main__':
     print("Starting Snorkel AI Benchmark Auditor Web Application on http://127.0.0.1:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
