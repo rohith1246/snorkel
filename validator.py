@@ -4,6 +4,7 @@ import zipfile
 import tempfile
 import shutil
 import pathlib
+import ast
 try:
     import tomllib
 except ImportError:
@@ -119,7 +120,7 @@ class SnorkelTaskValidator:
             # 4. Audit Dockerfile & Environment
             self._audit_dockerfile()
 
-            # 5. Audit Solution & Tests (Strict CTRF plugin & docstring checks)
+            # 5. Audit Solution & Tests (Strict CTRF plugin, docstrings, & Oracle execution alignment)
             self._audit_solution_and_tests(is_milestone, number_of_milestones)
 
             # Final Score Normalization
@@ -417,6 +418,21 @@ class SnorkelTaskValidator:
             with open(test_sh_path, "r", encoding="utf-8", errors="ignore") as f:
                 t_content = f.read()
 
+            # NEW DEEP CHECK 1: Ensure tests/test.sh explicitly runs solution/solve.sh BEFORE running pytest!
+            runs_solution = any(kw in t_content for kw in ["solve.sh", "solve.py", "solution/solve"])
+            if not runs_solution:
+                self.add_check(
+                    "ORACLE_SOLUTION_EXECUTION", "Verifier Reference Solution Invocation", "Testing", "FAIL",
+                    "tests/test.sh does NOT execute the reference solution (solution/solve.sh) before running pytest assertions.",
+                    details="Running pytest without first executing solution/solve.sh will cause the verifier to find missing output files or unhandled code states, resulting in a 0.000 Oracle score.",
+                    suggestion="Add `bash solution/solve.sh` (or `bash /app/solution/solve.sh`) before pytest execution in tests/test.sh."
+                )
+            else:
+                self.add_check(
+                    "ORACLE_SOLUTION_EXECUTION", "Verifier Reference Solution Invocation", "Testing", "PASS",
+                    "tests/test.sh explicitly executes the reference solution before running pytest assertions."
+                )
+
             if "pip install" in t_content or "apt-get" in t_content:
                 self.add_check(
                     "TEST_SH_OFFLINE", "Offline Test Execution Policy", "Testing", "FAIL",
@@ -476,7 +492,35 @@ class SnorkelTaskValidator:
             else:
                 self.add_check("TEST_SH_REWARD_RELIABILITY", "Verifier Reward File Writing Reliability", "Testing", "PASS", "test.sh safely handles pytest exit codes without suppressing reward file creation.")
 
-        # Audit test_outputs.py docstrings
+        # NEW DEEP CHECK 2: Parse Python AST in solution/solve.py or solution/solve.sh for syntax errors
+        solve_py_path = os.path.join(self.task_root, "solution", "solve.py")
+        solve_sh_path = os.path.join(self.task_root, "solution", "solve.sh")
+        
+        py_code_to_check = ""
+        if os.path.exists(solve_py_path):
+            with open(solve_py_path, "r", encoding="utf-8", errors="ignore") as f:
+                py_code_to_check = f.read()
+        elif os.path.exists(solve_sh_path):
+            with open(solve_sh_path, "r", encoding="utf-8", errors="ignore") as f:
+                sh_text = f.read()
+                # Extract python heredoc if present
+                m = re.search(r"python3?\s+-\s+<<\s*['\"]?PYEOF['\"]?\n(.*?)PYEOF", sh_text, re.DOTALL)
+                if m:
+                    py_code_to_check = m.group(1)
+
+        if py_code_to_check:
+            try:
+                ast.parse(py_code_to_check)
+                self.add_check("ORACLE_PYTHON_SYNTAX", "Oracle Python Solution Syntax Validation", "Solution", "PASS", "Oracle solution Python code has valid syntax without syntax errors.")
+            except SyntaxError as se:
+                self.add_check(
+                    "ORACLE_PYTHON_SYNTAX", "Oracle Python Solution Syntax Validation", "Solution", "FAIL",
+                    f"Oracle solution Python code contains a SyntaxError: {se.msg} (line {se.lineno}).",
+                    details="Syntax errors in solve.py or solve.sh cause the Oracle solution to fail with exit code 1 during STB Harbor evaluation.",
+                    suggestion="Fix the syntax error in solution/solve.py or solution/solve.sh (e.g. unescaped string literal or quotes)."
+                )
+
+        # Audit test_outputs.py docstrings & output file matching
         test_py_path = os.path.join(self.task_root, "tests", "test_outputs.py")
         if os.path.exists(test_py_path):
             with open(test_py_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -500,6 +544,32 @@ class SnorkelTaskValidator:
                 self.add_check(
                     "TEST_DOCSTRINGS", "Pytest Function Docstrings", "Testing", "PASS",
                     f"All {len(test_funcs)} test functions in test_outputs.py have clear and descriptive docstrings."
+                )
+
+            # NEW DEEP CHECK 3: Check matching output file paths between test_outputs.py and solution
+            expected_json_files = set(re.findall(r'[\'"](/app/[^\'"]+\.json)[\'"]', py_content) + re.findall(r'[\'"]([a-zA-Z0-9_\-]+\.json)[\'"]', py_content))
+            solution_text = py_code_to_check
+            if os.path.exists(solve_sh_path):
+                with open(solve_sh_path, "r", encoding="utf-8", errors="ignore") as f:
+                    solution_text += "\n" + f.read()
+
+            mismatched_outputs = []
+            for ef in expected_json_files:
+                fname = os.path.basename(ef)
+                if fname not in solution_text and fname not in ["ctrf.json", "reward.txt"]:
+                    mismatched_outputs.append(fname)
+
+            if mismatched_outputs:
+                self.add_check(
+                    "ORACLE_FILE_PATH_ALIGNMENT", "Verifier Output Path Alignment", "Solution", "FAIL",
+                    f"Output JSON file(s) expected by test_outputs.py not written by solution: {mismatched_outputs}.",
+                    details="If test_outputs.py asserts an output file (e.g. resolution_plan.json) but solution/solve.sh writes a different filename (e.g. resolved_pipeline.json), Oracle evaluation will fail with score 0.000.",
+                    suggestion=f"Ensure solution/solve.sh writes to the exact output file paths asserted in tests/test_outputs.py: {mismatched_outputs}"
+                )
+            else:
+                self.add_check(
+                    "ORACLE_FILE_PATH_ALIGNMENT", "Verifier Output Path Alignment", "Solution", "PASS",
+                    "Output file paths asserted by tests/test_outputs.py match the solution implementation."
                 )
 
         solve_sh_path = os.path.join(self.task_root, "solution", "solve.sh")
