@@ -9,7 +9,9 @@ ALREADY_CREATED_TASKS = {
     "jwt-trust-auditor-task",
     "hyperparameter-conflict-resolver",
     "gpu-cluster-node-health-monitor",
-    "kubernetes-resource-quota-reconciler"
+    "kubernetes-resource-quota-reconciler",
+    "game-asset-bundle-audit-reconciler",
+    "distributed-feature-store-reconciler"
 }
 
 def get_100_task_ideas():
