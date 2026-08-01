@@ -82,21 +82,28 @@ class SnorkelTaskValidator:
             else:
                 self.add_check("ZIP_CLEANLINESS", "ZIP Artifact Isolation & Cleanliness", "Packaging", "PASS", "ZIP archive is clean and free of runtime/cache directories.")
 
-            # Determine task root
-            top_level_dirs = {name.split('/')[0] for name in namelist if '/' in name}
-            has_root_files = any('/' not in name for name in namelist if name)
-            
-            if not has_root_files and len(top_level_dirs) == 1:
-                nested_folder = list(top_level_dirs)[0]
-                self.task_root = os.path.join(self.temp_dir, nested_folder)
+            # Normalize backslashes to forward slashes for cross-platform Windows/Linux compatibility
+            normalized_namelist = [n.replace("\\", "/") for n in namelist]
+
+            # Auto-locate task root by finding task.toml or instruction.md anywhere in extracted temp dir
+            toml_rel_path = None
+            for root, dirs, files in os.walk(self.temp_dir):
+                if "task.toml" in files or "instruction.md" in files:
+                    self.task_root = root
+                    toml_rel_path = os.path.relpath(root, self.temp_dir).replace("\\", "/")
+                    break
+
+            if not self.task_root:
+                self.task_root = self.temp_dir
+
+            if toml_rel_path and toml_rel_path != ".":
                 self.add_check(
                     "ZIP_STRUCTURE", "ZIP Package File Nesting", "Packaging", "WARN",
-                    f"Task files are nested inside a subfolder '{nested_folder}' in the ZIP archive.",
+                    f"Task files are nested inside a subfolder '{toml_rel_path}' in the ZIP archive.",
                     details="Per Snorkel Platform rules, select individual files inside your task folder when compressing, rather than compressing the containing parent folder.",
                     suggestion="Compress files directly from inside your task folder (Select All -> Compress)."
                 )
             else:
-                self.task_root = self.temp_dir
                 self.add_check(
                     "ZIP_STRUCTURE", "ZIP Package File Nesting", "Packaging", "PASS",
                     "Task files are correctly packaged directly at the root of the ZIP archive."
