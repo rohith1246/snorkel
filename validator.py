@@ -282,12 +282,19 @@ class SnorkelTaskValidator:
                 "tests/test_outputs.py": "Pytest Assertion Suite"
             }
             for rel_path, desc in req_root_files.items():
-                full_p = os.path.join(self.task_root, rel_path)
+                # Normalize path separators for cross-platform compatibility (Windows \ vs Linux /)
+                normalized_rel = rel_path.replace("/", os.sep)
+                full_p = os.path.join(self.task_root, normalized_rel)
                 if os.path.exists(full_p):
-                    self.add_check(f"FILE_{rel_path.replace('/', '_')}", desc, "Architecture", "PASS", f"Found required file `{rel_path}`.")
+                    self.add_check(f"FILE_{rel_path.replace('/', '_').replace('.', '_')}", desc, "Architecture", "PASS", f"Found required file `{rel_path}`.")
                 else:
-                    self.add_check(f"FILE_{rel_path.replace('/', '_')}", desc, "Architecture", "FAIL", f"Missing required file `{rel_path}`.",
-                                   suggestion=f"Create `{rel_path}` according to task component specifications.")
+                    # Also check forward-slash variant (Linux)
+                    alt_p = os.path.join(self.task_root, rel_path)
+                    if os.path.exists(alt_p):
+                        self.add_check(f"FILE_{rel_path.replace('/', '_').replace('.', '_')}", desc, "Architecture", "PASS", f"Found required file `{rel_path}`.")
+                    else:
+                        self.add_check(f"FILE_{rel_path.replace('/', '_').replace('.', '_')}", desc, "Architecture", "FAIL", f"Missing required file `{rel_path}`.",
+                                       suggestion=f"Create `{rel_path}` according to task component specifications.")
 
     def _audit_instruction_styling(self):
         inst_path = os.path.join(self.task_root, "instruction.md")
