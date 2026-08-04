@@ -174,38 +174,46 @@ class SnorkelTaskValidator:
             )
             return None
 
-        version = data.get("version")
-        if version == "2.0":
-            self.add_check("SCHEMA_VERSION", "Top-level Schema Version", "Metadata", "PASS", "Schema version is set to '2.0'.")
-        else:
-            self.add_check("SCHEMA_VERSION", "Top-level Schema Version", "Metadata", "FAIL",
-                           f"Invalid schema version '{version}'. Must be '2.0'.",
-                           suggestion="Set `version = \"2.0\"` at the top level of task.toml.")
-
         self.results["task_name"] = data.get("name", os.path.basename(self.task_root))
 
-        meta = data.get("metadata", {})
-        required_meta_keys = ["author_name", "author_email", "difficulty", "category", "subcategories", "codebase_size", "languages", "tags"]
-        missing_keys = [k for k in required_meta_keys if k not in meta]
-        
-        if not missing_keys:
-            self.add_check("METADATA_SECTION", "[metadata] Section Compliance", "Metadata", "PASS", "All required [metadata] fields are present.")
-        else:
-            self.add_check("METADATA_SECTION", "[metadata] Section Compliance", "Metadata", "FAIL",
-                           f"Missing metadata fields: {', '.join(missing_keys)}",
-                           suggestion=f"Add missing fields to [metadata]: {missing_keys}")
+        # Check if Terminus 3 schema (top-level fields) or Terminus 2 schema ([metadata] section)
+        is_t3 = "category" in data or "difficulty" in data or "artifacts" in data
+        meta = data.get("metadata", {}) if not is_t3 else data
 
-        # Check difficulty enum validity
-        difficulty_val = str(meta.get("difficulty", "")).strip().lower()
-        valid_difficulties = ["easy", "medium", "hard"]
+        if is_t3:
+            self.add_check("SCHEMA_VERSION", "Terminus 3 Schema Compliance", "Metadata", "PASS", "Task uses Terminus 3 Schema configuration.")
+            required_meta_keys = ["name", "category", "tags", "difficulty", "artifacts"]
+            missing_keys = [k for k in required_meta_keys if k not in data]
+            if not missing_keys:
+                self.add_check("METADATA_SECTION", "Task Configuration Fields", "Metadata", "PASS", "All required Terminus 3 fields are present.")
+            else:
+                self.add_check("METADATA_SECTION", "Task Configuration Fields", "Metadata", "FAIL",
+                               f"Missing Terminus 3 configuration fields: {', '.join(missing_keys)}",
+                               suggestion=f"Add missing fields to task.toml: {missing_keys}")
+        else:
+            version = data.get("version", "2.0")
+            self.add_check("SCHEMA_VERSION", "Schema Version", "Metadata", "PASS", f"Schema version is set to '{version}'.")
+            required_meta_keys = ["author_name", "author_email", "difficulty", "category", "subcategories", "codebase_size", "languages", "tags"]
+            missing_keys = [k for k in required_meta_keys if k not in meta]
+            if not missing_keys:
+                self.add_check("METADATA_SECTION", "[metadata] Section Compliance", "Metadata", "PASS", "All required [metadata] fields are present.")
+            else:
+                self.add_check("METADATA_SECTION", "[metadata] Section Compliance", "Metadata", "FAIL",
+                               f"Missing metadata fields: {', '.join(missing_keys)}",
+                               suggestion=f"Add missing fields to [metadata]: {missing_keys}")
+
+        # Check difficulty enum validity (Terminus 3: frontier, advanced, core, base | Terminus 2: easy, medium, hard)
+        raw_diff = data.get("difficulty") or meta.get("difficulty", "")
+        difficulty_val = str(raw_diff).strip().lower()
+        valid_difficulties = ["frontier", "advanced", "core", "base", "easy", "medium", "hard"]
         if difficulty_val in valid_difficulties:
             self.add_check("DIFFICULTY_ENUM_VALID", "Task Difficulty Value Compliance", "Metadata", "PASS", f"Difficulty is valid ('{difficulty_val}').")
         else:
             self.add_check(
                 "DIFFICULTY_ENUM_VALID", "Task Difficulty Value Compliance", "Metadata", "FAIL",
-                f"Invalid difficulty '{meta.get('difficulty')}'. Allowed schema v2.0 values are: {valid_difficulties}.",
-                details="Per Snorkel schema v2.0, difficulty must be exactly one of 'easy', 'medium', or 'hard'. Custom strings like 'excellent' break STB Harbor evaluation.",
-                suggestion="Change metadata difficulty in task.toml to 'easy', 'medium', or 'hard'."
+                f"Invalid difficulty '{raw_diff}'. Allowed values are: {valid_difficulties}.",
+                details="Per Terminus 3 & Snorkel schema, difficulty must be one of: 'frontier', 'advanced', 'core', 'base', 'easy', 'medium', or 'hard'.",
+                suggestion="Change difficulty in task.toml to 'frontier', 'advanced', 'core', or 'base'."
             )
 
         for sec in ["verifier", "agent", "environment"]:
@@ -266,8 +274,10 @@ class SnorkelTaskValidator:
         else:
             req_root_files = {
                 "instruction.md": "Task Instructions File",
+                "README.md": "Human-written Task README",
                 "environment/Dockerfile": "Environment Dockerfile",
                 "solution/solve.sh": "Oracle Solution Script",
+                "tests/Dockerfile": "Verifier Container Dockerfile",
                 "tests/test.sh": "Verifier Test Runner",
                 "tests/test_outputs.py": "Pytest Assertion Suite"
             }
@@ -427,19 +437,22 @@ class SnorkelTaskValidator:
             with open(test_sh_path, "r", encoding="utf-8", errors="ignore") as f:
                 t_content = f.read()
 
-            # NEW DEEP CHECK 1: Ensure tests/test.sh explicitly runs solution/solve.sh BEFORE running pytest!
+            # NEW DEEP CHECK 1: Ensure tests/test.sh runs solution or Terminus 3 separate verifier mode is active
+            tests_dockerfile_path = os.path.join(self.task_root, "tests", "Dockerfile")
+            has_tests_dockerfile = os.path.exists(tests_dockerfile_path)
             runs_solution = any(kw in t_content for kw in ["solve.sh", "solve.py", "solution/solve", "reconciler.py"])
-            if not runs_solution:
+            
+            if runs_solution or has_tests_dockerfile:
                 self.add_check(
-                    "ORACLE_SOLUTION_EXECUTION", "Verifier Reference Solution Invocation", "Testing", "FAIL",
-                    "tests/test.sh does NOT execute the reference solution (solution/solve.sh) before running pytest assertions.",
-                    details="Running pytest without first executing solution/solve.sh will cause the verifier to find missing output files or unhandled code states, resulting in a 0.000 Oracle score.",
-                    suggestion="Add `bash solution/solve.sh` (or `bash /app/solution/solve.sh`) before pytest execution in tests/test.sh."
+                    "ORACLE_SOLUTION_EXECUTION", "Verifier Reference Solution Invocation", "Testing", "PASS",
+                    "Verifier reference solution invocation / artifact transfer is properly configured."
                 )
             else:
                 self.add_check(
-                    "ORACLE_SOLUTION_EXECUTION", "Verifier Reference Solution Invocation", "Testing", "PASS",
-                    "tests/test.sh explicitly executes the reference solution before running pytest assertions."
+                    "ORACLE_SOLUTION_EXECUTION", "Verifier Reference Solution Invocation", "Testing", "FAIL",
+                    "tests/test.sh does NOT execute the reference solution (solution/solve.sh) before running pytest assertions.",
+                    details="Running pytest without first executing solution/solve.sh will cause the verifier to find missing output files.",
+                    suggestion="Add `bash solution/solve.sh` before pytest in tests/test.sh, or add tests/Dockerfile for Terminus 3 separate mode."
                 )
 
             if "pip install" in t_content or "apt-get" in t_content:
@@ -453,17 +466,22 @@ class SnorkelTaskValidator:
                 self.add_check("TEST_SH_OFFLINE", "Offline Test Execution Policy", "Testing", "PASS", "tests/test.sh executes offline without runtime package installation.")
 
             if "--ctrf" in t_content:
-                # Check if pytest-json-ctrf is installed in Dockerfile or tests/requirements.txt
-                has_ctrf_installed = "pytest-json-ctrf" in dockerfile_content or (os.path.exists(test_req_path) and "pytest-json-ctrf" in open(test_req_path).read())
+                # Check if pytest-json-ctrf is installed in environment/Dockerfile or tests/Dockerfile or tests/requirements.txt
+                tests_docker_content = ""
+                if os.path.exists(tests_dockerfile_path):
+                    with open(tests_dockerfile_path, "r", encoding="utf-8", errors="ignore") as f:
+                        tests_docker_content = f.read()
+                
+                has_ctrf_installed = "pytest-json-ctrf" in dockerfile_content or "pytest-json-ctrf" in tests_docker_content or (os.path.exists(test_req_path) and "pytest-json-ctrf" in open(test_req_path).read())
                 if not has_ctrf_installed:
                     self.add_check(
                         "TEST_CTRF_INSTALLED", "pytest-json-ctrf Package Installation", "Testing", "FAIL",
-                        "tests/test.sh uses --ctrf flag but pytest-json-ctrf is missing from environment/Dockerfile.",
-                        details="Using --ctrf without pytest-json-ctrf causes pytest to fail with 'unrecognized arguments: --ctrf' resulting in 0.000 reward.",
-                        suggestion="Add `pytest-json-ctrf==0.3.5` to pip install command in environment/Dockerfile."
+                        "tests/test.sh uses --ctrf flag but pytest-json-ctrf is missing from Dockerfile.",
+                        details="Using --ctrf without pytest-json-ctrf causes pytest to fail with 'unrecognized arguments: --ctrf'.",
+                        suggestion="Add `pytest-json-ctrf==0.3.5` to pip install command in tests/Dockerfile or environment/Dockerfile."
                     )
                 else:
-                    self.add_check("TEST_CTRF_INSTALLED", "pytest-json-ctrf Package Installation", "Testing", "PASS", "pytest-json-ctrf package is pre-baked in environment/Dockerfile.")
+                    self.add_check("TEST_CTRF_INSTALLED", "pytest-json-ctrf Package Installation", "Testing", "PASS", "pytest-json-ctrf package is pre-baked in Docker container environment.")
 
             if "--ctrf" in t_content and "/logs/verifier/reward.txt" in t_content:
                 self.add_check("TEST_SH_CTRF", "Verifier CTRF Reporting & Reward Output", "Testing", "PASS", "test.sh generates CTRF JSON log and writes /logs/verifier/reward.txt.")

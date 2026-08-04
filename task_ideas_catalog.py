@@ -11,7 +11,8 @@ ALREADY_CREATED_TASKS = {
     "gpu-cluster-node-health-monitor",
     "kubernetes-resource-quota-reconciler",
     "game-asset-bundle-audit-reconciler",
-    "distributed-feature-store-reconciler"
+    "distributed-feature-store-reconciler",
+    "reconcile-ocean-acoustics-registry"
 }
 
 def get_100_task_ideas():

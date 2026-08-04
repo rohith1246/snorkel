@@ -1,21 +1,38 @@
-document.addEventListener('DOMContentLoaded', () => {
     // --- MODE NAVIGATION ---
     const modeAuditorBtn = document.getElementById('modeAuditorBtn');
+    const modeTemplateBtn = document.getElementById('modeTemplateBtn');
     const modeIdeasBtn = document.getElementById('modeIdeasBtn');
     const sectionAuditor = document.getElementById('sectionAuditor');
+    const sectionTemplate = document.getElementById('sectionTemplate');
     const sectionIdeas = document.getElementById('sectionIdeas');
 
     modeAuditorBtn.addEventListener('click', () => {
         modeAuditorBtn.classList.add('active');
+        if (modeTemplateBtn) modeTemplateBtn.classList.remove('active');
         modeIdeasBtn.classList.remove('active');
         sectionAuditor.style.display = 'grid';
+        if (sectionTemplate) sectionTemplate.style.display = 'none';
         sectionIdeas.style.display = 'none';
     });
+
+    if (modeTemplateBtn) {
+        modeTemplateBtn.addEventListener('click', () => {
+            modeTemplateBtn.classList.add('active');
+            modeAuditorBtn.classList.remove('active');
+            modeIdeasBtn.classList.remove('active');
+            sectionAuditor.style.display = 'none';
+            if (sectionTemplate) sectionTemplate.style.display = 'block';
+            sectionIdeas.style.display = 'none';
+            loadTerminus3Structure();
+        });
+    }
 
     modeIdeasBtn.addEventListener('click', () => {
         modeIdeasBtn.classList.add('active');
         modeAuditorBtn.classList.remove('active');
+        if (modeTemplateBtn) modeTemplateBtn.classList.remove('active');
         sectionAuditor.style.display = 'none';
+        if (sectionTemplate) sectionTemplate.style.display = 'none';
         sectionIdeas.style.display = 'block';
         loadTaskIdeas(1);
     });
@@ -348,13 +365,64 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Search Input Event
-    let searchTimeout = null;
-    taskSearchInput.addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            currentSearch = e.target.value.trim();
-            loadTaskIdeas(1);
-        }, 300);
-    });
+    // Terminus 3 Tree Structure Explorer Logic
+    async function loadTerminus3Structure() {
+        const treeNav = document.getElementById('t3TreeNav');
+        if (!treeNav) return;
+        
+        try {
+            const resp = await fetch('/api/terminus3-structure');
+            const data = await resp.json();
+            if (data.status === 'SUCCESS') {
+                renderT3Tree(data.structure);
+            }
+        } catch (e) {
+            console.error('Failed to load Terminus 3 structure:', e);
+        }
+    }
+
+    function renderT3Tree(items) {
+        const treeNav = document.getElementById('t3TreeNav');
+        const detailContent = document.getElementById('t3DetailContent');
+        if (!treeNav) return;
+        treeNav.innerHTML = '';
+        
+        items.forEach((item, idx) => {
+            const row = document.createElement('div');
+            row.style.padding = '8px 10px';
+            row.style.margin = '4px 0';
+            row.style.borderRadius = '6px';
+            row.style.cursor = 'pointer';
+            row.style.transition = 'all 0.2s ease';
+            row.style.border = '1px solid transparent';
+            
+            const icon = item.type === 'folder' ? '<i class="fa-solid fa-folder icon-blue" style="margin-right:8px;"></i>' : '<i class="fa-regular fa-file-code" style="margin-right:8px; color:#0E7490;"></i>';
+            row.innerHTML = `${icon} <strong>${item.path}</strong>`;
+            
+            row.addEventListener('mouseenter', () => {
+                row.style.background = '#F1F5F9';
+                row.style.borderColor = '#CBD5E1';
+            });
+            row.addEventListener('mouseleave', () => {
+                row.style.background = 'transparent';
+                row.style.borderColor = 'transparent';
+            });
+            
+            row.addEventListener('click', () => {
+                detailContent.innerHTML = `
+                    <h3 style="font-size: 16px; font-weight: 700; color: #0E7490;">
+                        ${icon} ${item.path}
+                    </h3>
+                    <p style="margin-top: 10px; font-size: 14px; color: #334155; line-height: 1.6;">
+                        ${item.description}
+                    </p>
+                    <div style="margin-top: 15px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; font-size: 13px;">
+                        <strong>Requirement Check:</strong> Must adhere to official Terminus 3 platform rules.
+                    </div>
+                `;
+            });
+            
+            treeNav.appendChild(row);
+        });
+    }
 });

@@ -2,11 +2,13 @@ import os
 import tempfile
 import zipfile
 import json
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, send_file
+import io
 from validator import SnorkelTaskValidator
 from groq_agent import GroqTaskAgent
 from db import TaskAuditDB
 from task_ideas_catalog import get_100_task_ideas
+from terminus3_template import TERMINUS3_FOLDER_STRUCTURE, generate_terminus3_starter_zip_bytes
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500 MB max upload limit
@@ -195,6 +197,61 @@ def configure_neon_db():
         })
     except Exception as e:
         return jsonify({"status": "ERROR", "message": f"Failed to save Neon DB config: {str(e)}"}), 500
+
+@app.route('/api/terminus3-structure', methods=['GET'])
+def get_terminus3_structure():
+    return jsonify({
+        "status": "SUCCESS",
+        "title": "Snorkel Terminal-Bench 3 (Terminus 3) Official Task Layout",
+        "structure": TERMINUS3_FOLDER_STRUCTURE
+    })
+
+@app.route('/api/download-terminus3-starter', methods=['GET'])
+def download_terminus3_starter():
+    zip_bytes = generate_terminus3_starter_zip_bytes()
+    return send_file(
+        io.BytesIO(zip_bytes),
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='terminus3_task_starter_template.zip'
+    )
+
+@app.route('/api/download-demo-task/<task_slug>', methods=['GET'])
+def download_demo_task(task_slug):
+    valid_tasks = {
+        "reconcile-ocean-acoustics-registry": [
+            r"D:\snorkel terminal bench 3\reconcile-ocean-acoustics-registry.zip",
+            r"D:\snorkeltasksubmitted\reconcile-ocean-acoustics-registry.zip",
+            r"C:\Users\rohit\Downloads\reconcile-ocean-acoustics-registry.zip"
+        ],
+        "inference-fleet-reconciliation": [
+            r"D:\snorkeltasksubmitted\inference-fleet-reconciliation.zip",
+            r"C:\Users\rohit\Downloads\inference-fleet-reconciliation.zip"
+        ],
+        "training-pipeline-dependency-resolver": [
+            r"D:\snorkeltasksubmitted\training-pipeline-dependency-resolver.zip"
+        ],
+        "jwt-trust-auditor-task": [
+            r"D:\snorkeltasksubmitted\jwt-trust-auditor-task.zip"
+        ]
+    }
+
+    paths = valid_tasks.get(task_slug, [])
+    found_path = None
+    for p in paths:
+        if os.path.exists(p):
+            found_path = p
+            break
+
+    if not found_path:
+        return jsonify({"status": "ERROR", "message": f"Demo task package '{task_slug}' not found on server."}), 404
+
+    return send_file(
+        found_path,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f"{task_slug}.zip"
+    )
 
 if __name__ == '__main__':
     print("Starting Snorkel AI Benchmark Auditor Web Application on http://127.0.0.1:5000")

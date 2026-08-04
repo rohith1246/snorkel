@@ -23,10 +23,10 @@
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
                 <div class="brand-text">
-                    <h1>Snorkel AI <span>Task Auditor & Idea Engine</span></h1>
+                    <h1>Snorkel AI <span>Terminus 3 Auditor & Idea Engine</span></h1>
                     <p class="brand-subtitle">
                         <span class="author-tag"><i class="fa-solid fa-code"></i> Built by <strong>Rohith Vuppula</strong></span>
-                        <span class="dot-separator">•</span> STB Harbor & Platform Compliance Agent
+                        <span class="dot-separator">•</span> STB Harbor 2.4.1 & Terminus 3 Compliance Agent
                     </p>
                 </div>
             </div>
@@ -38,6 +38,9 @@
                         <i class="fa-solid fa-eye"></i>
                     </button>
                 </div>
+                <a href="/api/download-terminus3-starter" class="btn btn-success" title="Download Official Terminus 3 Task Starter Template">
+                    <i class="fa-solid fa-download"></i> Download Terminus 3 Starter (.zip)
+                </a>
                 <button class="btn btn-outline" id="openHistoryBtn">
                     <i class="fa-solid fa-clock-rotate-left"></i> History
                 </button>
@@ -47,7 +50,10 @@
         <!-- Main Mode Switcher Navigation -->
         <div class="mode-navigation white-card">
             <button class="mode-nav-btn active" id="modeAuditorBtn">
-                <i class="fa-solid fa-file-shield"></i> Task Package Auditor
+                <i class="fa-solid fa-file-shield"></i> Terminus 3 Task Auditor
+            </button>
+            <button class="mode-nav-btn" id="modeTemplateBtn">
+                <i class="fa-solid fa-folder-tree"></i> Terminus 3 Structure & Starter Template
             </button>
             <button class="mode-nav-btn" id="modeIdeasBtn">
                 <i class="fa-solid fa-lightbulb"></i> 100 Hardened Task Ideas Catalogue <span class="badge badge-primary">5 per Page</span>
@@ -62,7 +68,7 @@
                 <div class="card white-card upload-card">
                     <div class="card-header">
                         <h2><i class="fa-solid fa-file-zipper icon-blue"></i> Upload Task ZIP Package</h2>
-                        <span class="badge badge-primary"><i class="fa-solid fa-check"></i> v2.0 Schema Ready</span>
+                        <span class="badge badge-primary"><i class="fa-solid fa-check"></i> Terminus 3 Schema Ready</span>
                     </div>
                     <div class="upload-zone" id="uploadZone">
                         <input type="file" id="zipFileInput" accept=".zip" hidden>
@@ -176,7 +182,73 @@
             </section>
         </main>
 
-        <!-- MODE 2: 100 TASK IDEAS CATALOGUE SECTION -->
+        <!-- MODE 2: TERMINUS 3 STRUCTURE & DEMO TASK EXPLORER SECTION -->
+        <main class="mode-section" id="sectionTemplate" style="display: none;">
+            <div class="card white-card template-header-card" style="margin-bottom: 20px;">
+                <div class="ideas-banner-title">
+                    <div>
+                        <h2><i class="fa-solid fa-folder-tree icon-blue"></i> Snorkel Terminal-Bench 3 (Terminus 3) Official Layout & Demo Tasks</h2>
+                        <p>Explore the official Terminus 3 file hierarchy, download pre-configured starter templates, or download live submitted demo tasks to start authoring and testing.</p>
+                    </div>
+                    <span class="author-tag-lg"><i class="fa-solid fa-code"></i> Authored by <strong>Rohith Vuppula</strong></span>
+                </div>
+
+                <!-- Demo Task Download Action Bar -->
+                <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding-top: 15px; border-top: 1px solid #E2E8F0;">
+                    <a href="/api/download-terminus3-starter" class="btn btn-success">
+                        <i class="fa-solid fa-download"></i> Download Starter Template (.zip)
+                    </a>
+                    <a href="/api/download-demo-task/reconcile-ocean-acoustics-registry" class="btn btn-primary">
+                        <i class="fa-solid fa-circle-play"></i> Featured Demo Task: Ocean Acoustics (.zip)
+                    </a>
+                    <a href="/api/download-demo-task/inference-fleet-reconciliation" class="btn btn-outline">
+                        <i class="fa-solid fa-box-archive"></i> Fleet Reconciliation (.zip)
+                    </a>
+                    <a href="/api/download-demo-task/training-pipeline-dependency-resolver" class="btn btn-outline">
+                        <i class="fa-solid fa-box-archive"></i> Dependency Resolver (.zip)
+                    </a>
+                    <a href="/api/download-demo-task/jwt-trust-auditor-task" class="btn btn-outline">
+                        <i class="fa-solid fa-box-archive"></i> JWT Trust Auditor (.zip)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Structure Grid: Tree View Left, Guideline Detail Right -->
+            <div class="structure-grid" style="display: grid; grid-template-columns: 320px 1fr; gap: 20px;">
+                <!-- Left: Tree View -->
+                <div class="card white-card">
+                    <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 12px;">
+                        <i class="fa-solid fa-sitemap icon-blue"></i> Terminus 3 File Hierarchy
+                    </h3>
+                    <div id="t3TreeNav" style="font-family: 'Fira Code', monospace; font-size: 13px;">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- Right: File Guideline Detail -->
+                <div class="card white-card" id="t3DetailCard">
+                    <div id="t3DetailContent">
+                        <h3 style="font-size: 16px; font-weight: 700; color: #0E7490;">
+                            <i class="fa-solid fa-circle-info"></i> Terminus 3 Task Architecture Overview
+                        </h3>
+                        <p style="margin-top: 8px; font-size: 13.5px; color: #475569; line-height: 1.6;">
+                            In <strong>Terminus 3</strong>, tasks run with separate verifier containers (<code>environment_mode = "separate"</code>). The verifier container sees only declared <code>artifacts</code> copied from the main container, requiring <code>tests/Dockerfile</code> and <code>README.md</code>.
+                        </p>
+                        <div style="margin-top: 15px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; font-size: 13px;">
+                            <strong>⚡ Quick Start Steps:</strong>
+                            <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.8; color: #334155;">
+                                <li>Click <strong>Download Starter Template (.zip)</strong> or <strong>Featured Demo Task</strong> above.</li>
+                                <li>Extract the ZIP and inspect <code>task.toml</code>, <code>instruction.md</code>, and <code>tests/Dockerfile</code>.</li>
+                                <li>Test locally using <code>stb harbor run -a oracle -p .</code> in Ubuntu terminal.</li>
+                                <li>Drag & drop your updated ZIP into the <strong>Terminus 3 Task Auditor</strong> to get a 100/100 score!</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- MODE 3: 100 TASK IDEAS CATALOGUE SECTION -->
         <main class="mode-section" id="sectionIdeas" style="display: none;">
             <div class="card white-card ideas-header-card">
                 <div class="ideas-banner-title">
