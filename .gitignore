@@ -7,3 +7,4 @@ venv/
 .idea/
 .vscode/
 *.zip
+!demo_tasks/*.zip

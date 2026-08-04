@@ -218,27 +218,17 @@ def download_terminus3_starter():
 
 @app.route('/api/download-demo-task/<task_slug>', methods=['GET'])
 def download_demo_task(task_slug):
-    valid_tasks = {
-        "reconcile-ocean-acoustics-registry": [
-            r"D:\snorkel terminal bench 3\reconcile-ocean-acoustics-registry.zip",
-            r"D:\snorkeltasksubmitted\reconcile-ocean-acoustics-registry.zip",
-            r"C:\Users\rohit\Downloads\reconcile-ocean-acoustics-registry.zip"
-        ],
-        "inference-fleet-reconciliation": [
-            r"D:\snorkeltasksubmitted\inference-fleet-reconciliation.zip",
-            r"C:\Users\rohit\Downloads\inference-fleet-reconciliation.zip"
-        ],
-        "training-pipeline-dependency-resolver": [
-            r"D:\snorkeltasksubmitted\training-pipeline-dependency-resolver.zip"
-        ],
-        "jwt-trust-auditor-task": [
-            r"D:\snorkeltasksubmitted\jwt-trust-auditor-task.zip"
-        ]
-    }
+    repo_demo_path = os.path.join(os.path.dirname(__file__), "demo_tasks", f"{task_slug}.zip")
+    
+    valid_paths = [
+        repo_demo_path,
+        os.path.join(r"D:\snorkel terminal bench 3", f"{task_slug}.zip"),
+        os.path.join(r"D:\snorkeltasksubmitted", f"{task_slug}.zip"),
+        os.path.join(r"C:\Users\rohit\Downloads", f"{task_slug}.zip")
+    ]
 
-    paths = valid_tasks.get(task_slug, [])
     found_path = None
-    for p in paths:
+    for p in valid_paths:
         if os.path.exists(p):
             found_path = p
             break
