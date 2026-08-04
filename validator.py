@@ -282,23 +282,63 @@ class SnorkelTaskValidator:
                 "tests/test_outputs.py": "Pytest Assertion Suite"
             }
             for rel_path, desc in req_root_files.items():
-                # Normalize path separators for cross-platform compatibility (Windows \ vs Linux /)
-                normalized_rel = rel_path.replace("/", os.sep)
-                full_p = os.path.join(self.task_root, normalized_rel)
-                if os.path.exists(full_p):
-                    self.add_check(f"FILE_{rel_path.replace('/', '_').replace('.', '_')}", desc, "Architecture", "PASS", f"Found required file `{rel_path}`.")
+                found = False
+                # Stage 1: Check task_root
+                p1 = os.path.join(self.task_root, rel_path.replace("/", os.sep))
+                p2 = os.path.join(self.task_root, rel_path)
+                if os.path.exists(p1) or os.path.exists(p2):
+                    found = True
+                
+                # Stage 2: Check temp_dir
+                if not found:
+                    p3 = os.path.join(self.temp_dir, rel_path.replace("/", os.sep))
+                    p4 = os.path.join(self.temp_dir, rel_path)
+                    if os.path.exists(p3) or os.path.exists(p4):
+                        found = True
+
+                # Stage 3: Deep search in extracted ZIP tree
+                if not found:
+                    target_norm = rel_path.replace("\\", "/").lower()
+                    for root, dirs, files in os.walk(self.temp_dir):
+                        for f in files:
+                            fp = os.path.join(root, f)
+                            rel = os.path.relpath(fp, self.temp_dir).replace("\\", "/").lower()
+                            if rel == target_norm or rel.endswith("/" + target_norm):
+                                found = True
+                                break
+                        if found:
+                            break
+
+                check_key = f"FILE_{rel_path.replace('/', '_').replace('.', '_')}"
+                if found:
+                    self.add_check(check_key, desc, "Architecture", "PASS", f"Found required file `{rel_path}`.")
                 else:
-                    # Also check forward-slash variant (Linux)
-                    alt_p = os.path.join(self.task_root, rel_path)
-                    if os.path.exists(alt_p):
-                        self.add_check(f"FILE_{rel_path.replace('/', '_').replace('.', '_')}", desc, "Architecture", "PASS", f"Found required file `{rel_path}`.")
-                    else:
-                        self.add_check(f"FILE_{rel_path.replace('/', '_').replace('.', '_')}", desc, "Architecture", "FAIL", f"Missing required file `{rel_path}`.",
-                                       suggestion=f"Create `{rel_path}` according to task component specifications.")
+                    self.add_check(check_key, desc, "Architecture", "FAIL", f"Missing required file `{rel_path}`.",
+                                   suggestion=f"Create `{rel_path}` according to task component specifications.")
+
+    def _find_file_path(self, rel_path):
+        p1 = os.path.join(self.task_root, rel_path.replace("/", os.sep))
+        if os.path.exists(p1): return p1
+        p2 = os.path.join(self.task_root, rel_path)
+        if os.path.exists(p2): return p2
+        p3 = os.path.join(self.temp_dir, rel_path.replace("/", os.sep))
+        if os.path.exists(p3): return p3
+        p4 = os.path.join(self.temp_dir, rel_path)
+        if os.path.exists(p4): return p4
+
+        target_norm = rel_path.replace("\\", "/").lower()
+        for root, dirs, files in os.walk(self.temp_dir):
+            for f in files:
+                fp = os.path.join(root, f)
+                rel = os.path.relpath(fp, self.temp_dir).replace("\\", "/").lower()
+                if rel == target_norm or rel.endswith("/" + target_norm):
+                    return fp
+        return None
 
     def _audit_instruction_styling(self):
-        inst_path = os.path.join(self.task_root, "instruction.md")
-        if not os.path.exists(inst_path):
+        inst_path = self._find_file_path("instruction.md")
+        if not inst_path: return
+        if not inst_path:
             return
 
         with open(inst_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -334,7 +374,7 @@ class SnorkelTaskValidator:
             )
 
     def _audit_dockerfile(self):
-        dockerfile_path = os.path.join(self.task_root, "environment", "Dockerfile")
+        dockerfile_path = self._find_file_path("environment/Dockerfile")
         if not os.path.exists(dockerfile_path):
             return
 
@@ -415,16 +455,16 @@ class SnorkelTaskValidator:
         else:
             self.add_check("DOCKER_CONTEXT_SIZE", "Build Context & File Size Limits", "Docker", "PASS", f"environment/ size ({round(total_size_mb, 1)} MiB) is within limits.")
 
-        dockerignore_path = os.path.join(self.task_root, "environment", ".dockerignore")
-        if os.path.exists(dockerignore_path):
+        dockerignore_path = self._find_file_path("environment/.dockerignore")
+        if dockerignore_path:
             self.add_check("DOCKERIGNORE_CHECK", ".dockerignore File Presence", "Docker", "PASS", ".dockerignore file exists in environment/.")
         else:
             self.add_check("DOCKERIGNORE_CHECK", ".dockerignore File Presence", "Docker", "WARN", "Missing .dockerignore file in environment/.",
                            suggestion="Create environment/.dockerignore ignoring .git, solution/, tests/, node_modules, etc.")
 
     def _audit_solution_and_tests(self, is_milestone, number_of_milestones):
-        test_req_path = os.path.join(self.task_root, "tests", "requirements.txt")
-        if os.path.exists(test_req_path):
+        test_req_path = self._find_file_path("tests/requirements.txt")
+        if test_req_path:
             self.add_check("TEST_DEPS_SEPARATION", "Prohibited Test Requirements File", "Testing", "FAIL",
                            "Prohibited file tests/requirements.txt is present inside tests/ directory.",
                            details="Infobay / Snorkel reviewer guidelines strictly prohibit placing requirements.txt inside tests/.",
@@ -433,19 +473,19 @@ class SnorkelTaskValidator:
             self.add_check("TEST_DEPS_SEPARATION", "Docker Test Dependencies Pre-Bake Compliance", "Testing", "PASS",
                            "No prohibited tests/requirements.txt present; test dependencies pre-baked in Docker environment.")
 
-        dockerfile_path = os.path.join(self.task_root, "environment", "Dockerfile")
+        dockerfile_path = self._find_file_path("environment/Dockerfile")
         dockerfile_content = ""
-        if os.path.exists(dockerfile_path):
+        if dockerfile_path:
             with open(dockerfile_path, "r", encoding="utf-8", errors="ignore") as f:
                 dockerfile_content = f.read()
 
-        test_sh_path = os.path.join(self.task_root, "tests", "test.sh")
-        if os.path.exists(test_sh_path):
+        test_sh_path = self._find_file_path("tests/test.sh")
+        if test_sh_path:
             with open(test_sh_path, "r", encoding="utf-8", errors="ignore") as f:
                 t_content = f.read()
 
             # NEW DEEP CHECK 1: Ensure tests/test.sh runs solution or Terminus 3 separate verifier mode is active
-            tests_dockerfile_path = os.path.join(self.task_root, "tests", "Dockerfile")
+            tests_dockerfile_path = self._find_file_path("tests/Dockerfile")
             has_tests_dockerfile = os.path.exists(tests_dockerfile_path)
             runs_solution = any(kw in t_content for kw in ["solve.sh", "solve.py", "solution/solve", "reconciler.py"])
             
@@ -475,7 +515,7 @@ class SnorkelTaskValidator:
             if "--ctrf" in t_content:
                 # Check if pytest-json-ctrf is installed in environment/Dockerfile or tests/Dockerfile or tests/requirements.txt
                 tests_docker_content = ""
-                if os.path.exists(tests_dockerfile_path):
+                if tests_dockerfile_path:
                     with open(tests_dockerfile_path, "r", encoding="utf-8", errors="ignore") as f:
                         tests_docker_content = f.read()
                 
@@ -556,8 +596,8 @@ class SnorkelTaskValidator:
                 )
 
         # Audit test_outputs.py docstrings & output file matching
-        test_py_path = os.path.join(self.task_root, "tests", "test_outputs.py")
-        if os.path.exists(test_py_path):
+        test_py_path = self._find_file_path("tests/test_outputs.py")
+        if test_py_path:
             with open(test_py_path, "r", encoding="utf-8", errors="ignore") as f:
                 py_content = f.read()
 
@@ -610,8 +650,8 @@ class SnorkelTaskValidator:
                     "Output file paths asserted by tests/test_outputs.py match the solution implementation."
                 )
 
-        solve_sh_path = os.path.join(self.task_root, "solution", "solve.sh")
-        if os.path.exists(solve_sh_path):
+        solve_sh_path = self._find_file_path("solution/solve.sh")
+        if solve_sh_path:
             with open(solve_sh_path, "r", encoding="utf-8", errors="ignore") as f:
                 s_content = f.read()
 
