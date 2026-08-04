@@ -1,3 +1,4 @@
+document.addEventListener('DOMContentLoaded', () => {
     // --- MODE NAVIGATION ---
     const modeAuditorBtn = document.getElementById('modeAuditorBtn');
     const modeTemplateBtn = document.getElementById('modeTemplateBtn');
