@@ -70,12 +70,16 @@ TERMINUS3_FOLDER_STRUCTURE = [
 ]
 
 TEMPLATE_TASK_TOML = """name = "sample-terminus3-reconciliation-task"
-category = "Software Engineering"
-subcategory = "System Administration"
+category = "Software"
+subcategory = "Systems"
 tags = ["bash", "python", "sql", "reconciliation"]
 languages = ["python", "bash", "sql"]
 difficulty = "frontier"
 expert_time_estimate_hours = 6
+difficulty_explanation = "Requires multi-step system drift reconciliation across TSV logs and SQL migration generation."
+solution_explanation = "The reference solution parses TSV logs, verifies parameter checksums, and emits formatted JSON and SQL migration files."
+verification_explanation = "Pytest suite verifies schema validation, CLI --json-summary flag behavior, and SQL migration file structure."
+relevant_experience = "Distributed systems administration, Python data parsing, SQL migration scripting."
 artifacts = [
     "/app/reconciliation_report.json",
     "/app/migrations/V1__reconciled_output.sql"
